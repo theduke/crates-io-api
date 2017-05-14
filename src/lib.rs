@@ -64,10 +64,10 @@ impl Sort {
 ///
 /// Used to specify pagination, sorting and a query.
 pub struct ListOptions {
-    sort: Sort,
-    per_page: u64,
-    page: u64,
-    query: Option<String>,
+    pub sort: Sort,
+    pub per_page: u64,
+    pub page: u64,
+    pub query: Option<String>,
 }
 
 /// A synchronous client for the crates.io API.
