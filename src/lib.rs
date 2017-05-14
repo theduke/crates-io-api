@@ -1,3 +1,12 @@
+/// crates_io_api is a client for the [crates.io](https://crates.io) API.
+///
+/// It aims to provide an easy to use and complete client for retrieving
+/// detailed information about Rust's crate ecosystem.
+///
+/// **Note:** Right now, only a synchronous client is available.
+/// Once the Async version of hyper stabilizes, an asynchronous client based
+/// on Tokio will be added.
+
 #[macro_use]
 extern crate error_chain;
 extern crate serde;
@@ -257,7 +266,7 @@ impl SyncClient {
     ///   per_page: 100,
     ///   page: 1,
     ///   query: Some("api"),
-    /// })?
+    /// })?;
     /// ```
     pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse> {
         let mut url = self.base_url.join("crates")?;

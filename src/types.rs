@@ -1,8 +1,12 @@
+/// Types for the data that is available via the API.
+
 use std::collections::HashMap;
 use chrono::{DateTime, UTC, NaiveDate};
 
+/// Pagination information.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Meta {
+    /// The total amount of results.
     total: u64,
 }
 
