@@ -10,11 +10,10 @@ extern crate time;
 
 pub mod types;
 
-// use std::time::{Duration, Instant};
 use std::iter::Extend;
 
 use serde::de::DeserializeOwned;
-use reqwest::{Client, Url, StatusCode, UrlError};
+use reqwest::{Url, StatusCode, UrlError};
 
 use types::*;
 
@@ -30,10 +29,14 @@ error_chain! {
     }
 }
 
+/// Used to specify the sort behaviour of the Client::crates() method.
 #[derive(Debug, Clone)]
 pub enum Sort {
+    /// Sort alphabetically.
     Alphabetical,
+    /// Sort by relevance (meaningless if used without a query).
     Relevance,
+    /// Sort by downloads.
     Downloads,
 }
 
@@ -48,6 +51,9 @@ impl Sort {
     }
 }
 
+/// Options for the [crates]() method of the client.
+///
+/// Used to specify pagination, sorting and a query.
 pub struct ListOptions {
     sort: Sort,
     per_page: u64,
@@ -55,15 +61,19 @@ pub struct ListOptions {
     query: Option<String>,
 }
 
-pub struct CratesIO {
-    client: Client,
+/// A synchronous client for the crates.io API.
+pub struct SyncClient {
+    client: reqwest::Client,
     base_url: Url,
 }
 
-impl CratesIO {
+impl SyncClient {
+    /// Instantiate a new synchronous API client.
+    ///
+    /// This will fail if the underlying http client could not be created.
     pub fn new() -> Result<Self> {
-        let c = CratesIO {
-            client: Client::new()?,
+        let c = SyncClient {
+            client: reqwest::Client::new()?,
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         };
         Ok(c)
@@ -84,48 +94,38 @@ impl CratesIO {
         }
     }
 
-    /*
-    fn get_all<T: DeserializeOwned>(&self, url: Url) -> Result<Vec<T>> {
-        let mut items = Vec::<T>::new();
-
-        let per_page = 100;
-        let mut page = 1;
-
-        loop {
-            let mut paged_url = url.clone();
-            paged_url.query_pairs_mut()
-                     .append_pair("page", &page.to_string())
-                     .append_pair("per_page", &per_page.to_string());
-            let data = self.get(paged_url)?;
-            items.push(data);
-            break;
-        }
-
-        Ok(items)
-    }
-    */
-
+    /// Retrieve a summary containing crates.io wide information.
     pub fn summary(&self) -> Result<Summary> {
         let url = Url::parse("https://crates.io/summary")?;
         self.get(url)
     }
 
+    /// Retrieve information of a crate.
+    ///
+    /// If you require detailed information, consider using [full_crate]().
     pub fn get_crate(&self, name: &str) -> Result<CrateResponse> {
         let url = self.base_url.join("crates/")?.join(name)?;
         self.get(url)
     }
 
+    /// Retrieve download stats for a crate.
     pub fn crate_downloads(&self, name: &str) -> Result<Downloads> {
         let url = self.base_url.join(&format!("crates/{}/downloads", name))?;
         self.get(url)
     }
 
+    /// Retrieve the owners of a crate.
     pub fn crate_owners(&self, name: &str) -> Result<Vec<User>> {
         let url = self.base_url.join(&format!("crates/{}/owners", name))?;
         let resp: Owners = self.get(url)?;
         Ok(resp.users)
     }
 
+    /// Load all reverse dependencies of a crate.
+    ///
+    /// Note: Since the reverse dependency endpoint requires pagination, this
+    /// will result in multiple requests if the crate has more than 100 reverse
+    /// dependencies.
     pub fn crate_reverse_dependencies(&self, name: &str) -> Result<Vec<Dependency>> {
         let mut page = 1;
         let mut deps = Vec::new();
@@ -145,19 +145,24 @@ impl CratesIO {
         Ok(deps)
     }
 
+    /// Retrieve the authors for a crate version.
     pub fn crate_authors(&self, name: &str, version: &str) -> Result<Authors> {
         let url = self.base_url
             .join(&format!("crates/{}/{}/authors", name, version))?;
-        self.get(url)
+        let res: AuthorsResponse = self.get(url)?;
+        Ok(Authors{
+            names: res.meta.names,
+            users: res.users,
+        })
     }
 
+    /// Retrieve the dependencies of a crate version.
     pub fn crate_dependencies(&self, name: &str, version: &str) -> Result<Vec<Dependency>> {
         let url = self.base_url
             .join(&format!("crates/{}/{}/dependencies", name, version))?;
         let resp: Dependencies = self.get(url)?;
         Ok(resp.dependencies)
     }
-
 
     fn full_version(&self, version: Version) -> Result<FullVersion> {
         let authors = self.crate_authors(&version.crate_name, &version.num)?;
@@ -173,13 +178,21 @@ impl CratesIO {
             num: version.num,
             yanked: version.yanked,
 
-            author_names: authors.meta.names,
+            author_names: authors.names,
             authors: authors.users,
             dependencies: deps,
         };
         Ok(v)
     }
 
+    /// Retrieve all available information for a crate, including download
+    /// stats,  owners and reverse dependencies.
+    ///
+    /// The `all_versions` argument controls the retrieval of detailed version
+    /// information.
+    /// If false, only the data for the latest version will be fetched, if true,
+    /// detailed information for all versions will be available.
+    /// Note: Each version requires two extra requests.
     pub fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate> {
         let resp = self.get_crate(name)?;
         let data = resp.crate_data;
@@ -226,6 +239,26 @@ impl CratesIO {
         Ok(full)
     }
 
+    /// Retrieve a page of crates, optionally constrained by a query.
+    ///
+    /// If you want to get all results without worrying about paging,
+    /// use [all_crates]().
+    ///
+    /// # Examples
+    ///
+    /// Retrieve the first page of results for the query "api", with 100 items
+    /// per page and sorted alphabetically.
+    ///
+    /// ```
+    /// use crates_io_api::{ListOptions, Sort};
+    ///
+    /// client.crates(ListOptions{
+    ///   sort: Sort::Alphabetical,
+    ///   per_page: 100,
+    ///   page: 1,
+    ///   query: Some("api"),
+    /// })?
+    /// ```
     pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse> {
         let mut url = self.base_url.join("crates")?;
         {
@@ -240,6 +273,7 @@ impl CratesIO {
         self.get(url)
     }
 
+    /// Retrieve all crates, optionally constrained by a query.
     pub fn all_crates(&self, query: Option<String>) -> Result<Vec<Crate>> {
         let mut page = 1;
         let mut crates = Vec::new();

@@ -142,8 +142,13 @@ pub struct AuthorsMeta {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Authors {
+pub struct AuthorsResponse {
     pub meta: AuthorsMeta,
+    pub users: Vec<User>,
+}
+
+pub struct Authors {
+    pub names: Vec<String>,
     pub users: Vec<User>,
 }
 
