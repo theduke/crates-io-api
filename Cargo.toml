@@ -1,14 +1,22 @@
 [package]
 authors = ["theduke <chris@theduke.at>"]
 name = "crates_io_api"
-version = "0.1.0"
+license = "MIT/Apache-2.0"
+homepage = "https://github.com/theduke/crates_io_api"
+repository = "https://github.com/theduke/crates_io_api"
+documentation = "https://docs.rs/crates_io_api"
+readme = "README.md"
+keywords = [ "crates", "api" ]
+categories = [ "web-programming", "web-programming::http-client" ]
+
+version = "0.0.1"
 
 [dependencies]
-time = "0.1.37"
-chrono = { version = "0.3.1", features = ["serde"] }
-reqwest = "0.6.1"
-serde = "1.0.4"
-serde_derive = "1.0.4"
-serde_json = "1.0.2"
-url = "1.4.0"
-error-chain = "0.10"
+time = "0.1.*"
+chrono = { version = "0.3.*", features = ["serde"] }
+reqwest = "0.6.*"
+serde = "1.*"
+serde_derive = "1.*"
+serde_json = "1.*"
+url = "1.*"
+error-chain = "0.10.*"
