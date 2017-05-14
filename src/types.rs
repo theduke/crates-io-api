@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use chrono::{DateTime, UTC, NaiveDate};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Meta {
     total: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrateLinks {
     owners: String,
     reverse_dependencies: String,
@@ -14,7 +14,7 @@ pub struct CrateLinks {
     versions: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Crate {
     pub id: String,
     pub name: String,
@@ -35,19 +35,20 @@ pub struct Crate {
     pub updated_at: DateTime<UTC>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CratesResponse {
-    pub crates: Crate,
+    pub crates: Vec<Crate>,
     pub meta: Meta,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionLinks {
     pub authors: String,
     pub dependencies: String,
     pub version_downloads: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Version {
     #[serde(rename="crate")]
     pub crate_name: String,
@@ -59,10 +60,9 @@ pub struct Version {
     pub id: u64,
     pub num: String,
     pub yanked: bool,
-    pub links: VersionLinks,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Category {
     pub category: String,
     pub crates_cnt: u64,
@@ -72,7 +72,7 @@ pub struct Category {
     pub slug: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Keyword {
     pub id: String,
     pub keyword: String,
@@ -80,7 +80,7 @@ pub struct Keyword {
     pub created_at: DateTime<UTC>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrateResponse {
     pub categories: Vec<Category>,
     #[serde(rename="crate")]
@@ -89,7 +89,7 @@ pub struct CrateResponse {
     pub versions: Vec<Version>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Summary {
     pub just_updated: Vec<Crate>,
     pub most_downloaded: Vec<Crate>,
@@ -100,7 +100,7 @@ pub struct Summary {
     pub popular_keywords: Vec<Keyword>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionDownloads {
     pub date: NaiveDate,
     pub downloads: u64,
@@ -108,51 +108,51 @@ pub struct VersionDownloads {
     pub version: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExtraDownloads {
     pub date: NaiveDate,
     pub downloads: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DownloadsMeta {
     pub extra_downloads: Vec<ExtraDownloads>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Downloads {
     pub version_downloads: Vec<VersionDownloads>,
     pub meta: DownloadsMeta,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub avatar: Option<String>,
     pub email: Option<String>,
     pub id: u64,
     pub kind: String,
     pub login: String,
-    pub name: String,
+    pub name: Option<String>,
     pub url: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AuthorsMeta {
     pub names: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Authors {
     pub meta: AuthorsMeta,
     pub users: Vec<User>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Owners {
     pub users: Vec<User>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Dependency {
     pub crate_id: String,
     pub default_features: bool,
@@ -166,12 +166,12 @@ pub struct Dependency {
     pub version_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Dependencies {
     pub dependencies: Vec<Dependency>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullVersion {
     pub created_at: DateTime<UTC>,
     pub updated_at: DateTime<UTC>,
@@ -181,14 +181,13 @@ pub struct FullVersion {
     pub id: u64,
     pub num: String,
     pub yanked: bool,
-    pub links: VersionLinks,
 
     pub author_names: Vec<String>,
     pub authors: Vec<User>,
     pub dependencies: Vec<Dependency>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullCrate {
     pub id: String,
     pub name: String,
