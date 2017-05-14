@@ -1,11 +1,35 @@
-/// crates_io_api is a client for the [crates.io](https://crates.io) API.
-///
-/// It aims to provide an easy to use and complete client for retrieving
-/// detailed information about Rust's crate ecosystem.
-///
-/// **Note:** Right now, only a synchronous client is available.
-/// Once the Async version of hyper stabilizes, an asynchronous client based
-/// on Tokio will be added.
+//! API client for [crates.io](https://crates.io).
+//!
+//! It aims to provide an easy to use and complete client for retrieving
+//! information about Rust's crate ecosystem.
+//!
+//! **Note:** Right now, only a synchronous client is available.
+//! Once the Async version of hyper stabilizes, an asynchronous client based
+//! on Tokio will be added.
+//!
+//! # Examples
+//!
+//! Print the most downloaded crates and their non-optional dependencies:
+//!
+//! ```
+//! use crates_io_api::{SyncClient, Result};
+//! fn list_top_dependencies() -> Result<()> {
+//!     // Instantiate the client.
+//!     let client = SyncClient::new()?;
+//!     // Retrieve summary data.
+//!     let summary = client.summary()?;
+//!     for c in summary.most_downloaded {
+//!         println!("{}:", c.id);
+//!         for dep in client.crate_dependencies(&c.id, &c.max_version)? {
+//!             // Ignore optional dependencies.
+//!             if !dep.optional {
+//!                 println!("    * {} - {}", dep.id, dep.version_id);
+//!             }
+//!         }
+//!     }
+//!     Ok(())
+//! }
+//! ```
 
 #[macro_use]
 extern crate error_chain;
@@ -259,14 +283,18 @@ impl SyncClient {
     /// per page and sorted alphabetically.
     ///
     /// ```
-    /// use crates_io_api::{ListOptions, Sort};
+    /// # fn f() -> crates_io_api::Result<()> {
+    /// use crates_io_api::{SyncClient, ListOptions, Sort};
     ///
+    /// let client = SyncClient::new()?;
     /// client.crates(ListOptions{
     ///   sort: Sort::Alphabetical,
     ///   per_page: 100,
     ///   page: 1,
-    ///   query: Some("api"),
+    ///   query: Some("api".to_string()),
     /// })?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse> {
         let mut url = self.base_url.join("crates")?;
@@ -283,6 +311,9 @@ impl SyncClient {
     }
 
     /// Retrieve all crates, optionally constrained by a query.
+    ///
+    /// Note: This method fetches all pages of the result.
+    /// This can result in a lot queries (100 results per query).
     pub fn all_crates(&self, query: Option<String>) -> Result<Vec<Crate>> {
         let mut page = 1;
         let mut crates = Vec::new();

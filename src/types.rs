@@ -1,4 +1,4 @@
-/// Types for the data that is available via the API.
+//! Types for the data that is available via the API.
 
 use std::collections::HashMap;
 use chrono::{DateTime, UTC, NaiveDate};
