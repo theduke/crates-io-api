@@ -135,7 +135,7 @@ impl CratesIO {
                               name,
                               page))?;
             let res: Dependencies = self.get(url)?;
-            if res.dependencies.len() > 0 {
+            if res.dependencies.is_empty() {
                 deps.extend(res.dependencies);
                 page += 1;
             } else {
@@ -181,7 +181,7 @@ impl CratesIO {
     }
 
     pub fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate> {
-        let resp = self.get_crate(&name)?;
+        let resp = self.get_crate(name)?;
         let data = resp.crate_data;
 
         let dls = self.crate_downloads(name)?;
@@ -250,7 +250,7 @@ impl CratesIO {
                                       per_page: 100,
                                       page: page,
                                   })?;
-            if res.crates.len() > 0 {
+            if res.crates.is_empty() {
                 crates.extend(res.crates);
                 page += 1;
             } else {
