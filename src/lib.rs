@@ -170,7 +170,7 @@ impl SyncClient {
                               name,
                               page))?;
             let res: Dependencies = self.get(url)?;
-            if res.dependencies.is_empty() {
+            if res.dependencies.len() > 0 {
                 deps.extend(res.dependencies);
                 page += 1;
             } else {
