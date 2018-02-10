@@ -341,5 +341,13 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_client() {}
+    fn test_client() {
+        let client = SyncClient::new().unwrap();
+        let summary = client.summary().unwrap();
+        assert!(summary.most_downloaded.len() > 0);
+
+        for item in summary.most_downloaded {
+            let _ = client.full_crate(&item.name, false).unwrap();
+        }
+    }
 }
