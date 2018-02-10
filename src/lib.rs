@@ -106,7 +106,7 @@ impl SyncClient {
     /// This will fail if the underlying http client could not be created.
     pub fn new() -> Result<Self> {
         let c = SyncClient {
-            client: reqwest::Client::new()?,
+            client: reqwest::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         };
         Ok(c)
@@ -115,7 +115,7 @@ impl SyncClient {
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
         let mut res = self.client.get(url).send()?;
         if !res.status().is_success() {
-            if res.status() == &StatusCode::NotFound {
+            if res.status() == StatusCode::NotFound {
                 Err(ErrorKind::NotFound.into())
             } else {
                 Err(ErrorKind::ServerError.into())
