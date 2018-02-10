@@ -209,6 +209,8 @@ impl SyncClient {
             id: version.id,
             num: version.num,
             yanked: version.yanked,
+            links: version.links,
+            readme_path: version.readme_path,
 
             author_names: authors.names,
             authors: authors.users,

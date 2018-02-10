@@ -1,7 +1,7 @@
 //! Types for the data that is available via the API.
 
 use std::collections::HashMap;
-use chrono::{DateTime, UTC, NaiveDate};
+use chrono::{DateTime, Utc, NaiveDate};
 
 /// Pagination information.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -12,6 +12,8 @@ pub struct Meta {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrateLinks {
+    owner_team: String,
+    owner_user: String,
     owners: String,
     reverse_dependencies: String,
     version_downloads: String,
@@ -35,8 +37,8 @@ pub struct Crate {
     pub versions: Option<Vec<u64>>,
     pub max_version: String,
     pub links: CrateLinks,
-    pub created_at: DateTime<UTC>,
-    pub updated_at: DateTime<UTC>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -56,21 +58,23 @@ pub struct VersionLinks {
 pub struct Version {
     #[serde(rename="crate")]
     pub crate_name: String,
-    pub created_at: DateTime<UTC>,
-    pub updated_at: DateTime<UTC>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
     pub dl_path: String,
     pub downloads: u64,
     pub features: HashMap<String, Vec<String>>,
     pub id: u64,
     pub num: String,
     pub yanked: bool,
+    pub readme_path: Option<String>,
+    pub links: VersionLinks,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Category {
     pub category: String,
     pub crates_cnt: u64,
-    pub created_at: DateTime<UTC>,
+    pub created_at: DateTime<Utc>,
     pub description: String,
     pub id: String,
     pub slug: String,
@@ -81,7 +85,7 @@ pub struct Keyword {
     pub id: String,
     pub keyword: String,
     pub crates_cnt: u64,
-    pub created_at: DateTime<UTC>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -98,6 +102,7 @@ pub struct Summary {
     pub just_updated: Vec<Crate>,
     pub most_downloaded: Vec<Crate>,
     pub new_crates: Vec<Crate>,
+    pub most_recently_downloaded: Vec<Crate>,
     pub num_crates: u64,
     pub num_downloads: u64,
     pub popular_categories: Vec<Category>,
@@ -182,14 +187,16 @@ pub struct Dependencies {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullVersion {
-    pub created_at: DateTime<UTC>,
-    pub updated_at: DateTime<UTC>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
     pub dl_path: String,
     pub downloads: u64,
     pub features: HashMap<String, Vec<String>>,
     pub id: u64,
     pub num: String,
     pub yanked: bool,
+    pub readme_path: Option<String>,
+    pub links: VersionLinks,
 
     pub author_names: Vec<String>,
     pub authors: Vec<User>,
@@ -207,8 +214,8 @@ pub struct FullCrate {
     pub repository: Option<String>,
     pub total_downloads: u64,
     pub max_version: String,
-    pub created_at: DateTime<UTC>,
-    pub updated_at: DateTime<UTC>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 
     pub categories: Vec<Category>,
     pub keywords: Vec<Keyword>,
