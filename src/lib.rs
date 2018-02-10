@@ -40,6 +40,8 @@ extern crate serde_json;
 extern crate reqwest;
 extern crate chrono;
 extern crate time;
+#[macro_use]
+extern crate log;
 
 pub mod types;
 
@@ -113,6 +115,7 @@ impl SyncClient {
     }
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
+        trace!("GET {}", url);
         let mut res = self.client.get(url).send()?;
         if !res.status().is_success() {
             if res.status() == StatusCode::NotFound {
