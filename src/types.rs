@@ -7,17 +7,17 @@ use chrono::{DateTime, Utc, NaiveDate};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Meta {
     /// The total amount of results.
-    total: u64,
+    pub total: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrateLinks {
-    owner_team: String,
-    owner_user: String,
-    owners: String,
-    reverse_dependencies: String,
-    version_downloads: String,
-    versions: Option<String>,
+    pub owner_team: String,
+    pub owner_user: String,
+    pub owners: String,
+    pub reverse_dependencies: String,
+    pub version_downloads: String,
+    pub versions: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
