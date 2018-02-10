@@ -128,7 +128,7 @@ impl SyncClient {
 
     /// Retrieve a summary containing crates.io wide information.
     pub fn summary(&self) -> Result<Summary> {
-        let url = Url::parse("https://crates.io/summary")?;
+        let url = self.base_url.join("summary").unwrap();
         self.get(url)
     }
 
