@@ -39,7 +39,6 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate reqwest;
 extern crate chrono;
-extern crate time;
 #[macro_use]
 extern crate log;
 extern crate url;

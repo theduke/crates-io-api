@@ -13,7 +13,6 @@ categories = [ "web-programming", "web-programming::http-client" ]
 version = "0.1.0"
 
 [dependencies]
-time = "0.1"
 chrono = { version = "0.4.2", features = ["serde"] }
 reqwest = "0.8"
 serde = "1.0"
