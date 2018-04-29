@@ -1,7 +1,7 @@
 //! Types for the data that is available via the API.
 
+use chrono::{DateTime, NaiveDate, Utc};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc, NaiveDate};
 
 /// Used to specify the sort behaviour of the Client::crates() method.
 #[derive(Debug, Clone)]
@@ -35,7 +35,6 @@ pub struct ListOptions {
     pub page: u64,
     pub query: Option<String>,
 }
-
 
 /// Pagination information.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -90,7 +89,7 @@ pub struct VersionLinks {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Version {
-    #[serde(rename="crate")]
+    #[serde(rename = "crate")]
     pub crate_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -125,7 +124,7 @@ pub struct Keyword {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrateResponse {
     pub categories: Vec<Category>,
-    #[serde(rename="crate")]
+    #[serde(rename = "crate")]
     pub crate_data: Crate,
     pub keywords: Vec<Keyword>,
     pub versions: Vec<Version>,

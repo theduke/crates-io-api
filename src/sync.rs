@@ -1,8 +1,8 @@
 use super::*;
 use std::iter::Extend;
 
+use reqwest::{StatusCode, Url};
 use serde::de::DeserializeOwned;
-use reqwest::{Url, StatusCode};
 
 use types::*;
 
@@ -75,10 +75,10 @@ impl SyncClient {
         let mut page = 1;
         let mut deps = Vec::new();
         loop {
-            let url = self.base_url
-                .join(&format!("crates/{}/reverse_dependencies?per_page=100&page={}",
-                               name,
-                               page))?;
+            let url = self.base_url.join(&format!(
+                "crates/{}/reverse_dependencies?per_page=100&page={}",
+                name, page
+            ))?;
             let res: Dependencies = self.get(url)?;
             if res.dependencies.len() > 0 {
                 deps.extend(res.dependencies);
@@ -95,7 +95,7 @@ impl SyncClient {
         let url = self.base_url
             .join(&format!("crates/{}/{}/authors", name, version))?;
         let res: AuthorsResponse = self.get(url)?;
-        Ok(Authors{
+        Ok(Authors {
             names: res.meta.names,
             users: res.users,
         })
@@ -147,7 +147,6 @@ impl SyncClient {
         let dls = self.crate_downloads(name)?;
         let owners = self.crate_owners(name)?;
         let reverse_dependencies = self.crate_reverse_dependencies(name)?;
-
 
         let versions = if resp.versions.len() < 1 {
             vec![]
@@ -263,6 +262,5 @@ mod test {
         for item in &summary.most_downloaded[0..3] {
             let _ = client.full_crate(&item.name, false).unwrap();
         }
-
     }
 }

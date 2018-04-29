@@ -37,22 +37,22 @@ extern crate failure;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-extern crate reqwest;
 extern crate chrono;
+extern crate reqwest;
+extern crate serde_json;
 #[macro_use]
 extern crate log;
-extern crate url;
-extern crate tokio_core;
 extern crate futures;
+extern crate tokio_core;
+extern crate url;
 
-mod types;
-mod sync;
 mod async;
+mod sync;
+mod types;
 
-pub use types::*;
-pub use sync::SyncClient;
 pub use async::Client as AsyncClient;
+pub use sync::SyncClient;
+pub use types::*;
 
 #[derive(Fail, Debug)]
 pub enum Error {
@@ -75,5 +75,3 @@ impl From<url::ParseError> for Error {
         Error::Url(e)
     }
 }
-
-
