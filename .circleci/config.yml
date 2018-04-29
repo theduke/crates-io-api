@@ -1,0 +1,62 @@
+version: 2.0
+
+jobs:
+  build_stable:
+    docker:
+      - image: debian
+    steps:
+      - restore_cache:
+          key: rust
+      - checkout
+      - run: ~/.circleci/run-tests.sh
+      - save_cache:
+          key: rustup
+          paths:
+            - ~/.rustup
+            - ~/.cargo
+
+  build_beta:
+    docker:
+      - image: debian
+    steps:
+      - restore_cache:
+          key: rust
+      - checkout
+      - run: ~/.circleci/run-tests.sh
+      - save_cache:
+          key: rustup
+          paths:
+            - ~/.rustup
+            - ~/.cargo
+
+  build_nightly:
+    docker:
+      - image: debian
+    steps:
+      - restore_cache:
+          key: rust
+      - checkout
+      - run: ~/.circleci/run-tests.sh
+      - save_cache:
+          key: rustup
+          paths:
+            - ~/.rustup
+            - ~/.cargo
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      build_stable:
+        filters:
+          tags:
+            ignore: /*/
+      build_beta:
+        filters:
+          tags:
+            ignore: /*/
+      build_nightly:
+        filters:
+          tags:
+            ignore: /*/
+
