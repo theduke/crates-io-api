@@ -3,6 +3,40 @@
 use std::collections::HashMap;
 use chrono::{DateTime, Utc, NaiveDate};
 
+/// Used to specify the sort behaviour of the Client::crates() method.
+#[derive(Debug, Clone)]
+pub enum Sort {
+    /// Sort alphabetically.
+    Alphabetical,
+    /// Sort by relevance (meaningless if used without a query).
+    Relevance,
+    /// Sort by downloads.
+    Downloads,
+}
+
+impl Sort {
+    pub(crate) fn to_str(&self) -> &str {
+        use self::Sort::*;
+        match *self {
+            Alphabetical => "alpha",
+            Relevance => "",
+            Downloads => "downloads",
+        }
+    }
+}
+
+/// Options for the [crates]() method of the client.
+///
+/// Used to specify pagination, sorting and a query.
+#[derive(Clone, Debug)]
+pub struct ListOptions {
+    pub sort: Sort,
+    pub per_page: u64,
+    pub page: u64,
+    pub query: Option<String>,
+}
+
+
 /// Pagination information.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Meta {
