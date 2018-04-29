@@ -32,7 +32,7 @@
 //! ```
 
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -42,6 +42,7 @@ extern crate chrono;
 extern crate time;
 #[macro_use]
 extern crate log;
+extern crate url;
 
 pub mod types;
 
@@ -52,15 +53,25 @@ use reqwest::{Url, StatusCode, UrlError};
 
 use types::*;
 
-error_chain! {
-    foreign_links {
-        Reqwest(reqwest::Error);
-        Url(UrlError);
-    }
+#[derive(Fail, Debug)]
+pub enum Error {
+    #[fail(display = "{}", _0)]
+    Http(reqwest::Error),
+    #[fail(display = "{}", _0)]
+    Url(url::ParseError),
+    #[fail(display = "Not found")]
+    NotFound,
+}
 
-    errors {
-        ServerError {}
-        NotFound {}
+impl From<reqwest::Error> for Error {
+    fn from(e: reqwest::Error) -> Self {
+        Error::Http(e)
+    }
+}
+
+impl From<url::ParseError> for Error {
+    fn from(e: url::ParseError) -> Self {
+        Error::Url(e)
     }
 }
 
@@ -106,31 +117,31 @@ impl SyncClient {
     /// Instantiate a new synchronous API client.
     ///
     /// This will fail if the underlying http client could not be created.
-    pub fn new() -> Result<Self> {
+    pub fn new() -> Self {
         let c = SyncClient {
             client: reqwest::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         };
-        Ok(c)
+        c
     }
 
-    fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T> {
+    fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
         trace!("GET {}", url);
-        let mut res = self.client.get(url).send()?;
-        if !res.status().is_success() {
+        let mut res = {
+            let res = self.client.get(url).send()?;
+
             if res.status() == StatusCode::NotFound {
-                Err(ErrorKind::NotFound.into())
-            } else {
-                Err(ErrorKind::ServerError.into())
+                return Err(Error::NotFound);
             }
-        } else {
-            let data: T = res.json()?;
-            Ok(data)
-        }
+            res.error_for_status()?
+        };
+
+        let data: T = res.json()?;
+        Ok(data)
     }
 
     /// Retrieve a summary containing crates.io wide information.
-    pub fn summary(&self) -> Result<Summary> {
+    pub fn summary(&self) -> Result<Summary, Error> {
         let url = self.base_url.join("summary").unwrap();
         self.get(url)
     }
@@ -138,19 +149,19 @@ impl SyncClient {
     /// Retrieve information of a crate.
     ///
     /// If you require detailed information, consider using [full_crate]().
-    pub fn get_crate(&self, name: &str) -> Result<CrateResponse> {
+    pub fn get_crate(&self, name: &str) -> Result<CrateResponse, Error> {
         let url = self.base_url.join("crates/")?.join(name)?;
         self.get(url)
     }
 
     /// Retrieve download stats for a crate.
-    pub fn crate_downloads(&self, name: &str) -> Result<Downloads> {
+    pub fn crate_downloads(&self, name: &str) -> Result<Downloads, Error> {
         let url = self.base_url.join(&format!("crates/{}/downloads", name))?;
         self.get(url)
     }
 
     /// Retrieve the owners of a crate.
-    pub fn crate_owners(&self, name: &str) -> Result<Vec<User>> {
+    pub fn crate_owners(&self, name: &str) -> Result<Vec<User>, Error> {
         let url = self.base_url.join(&format!("crates/{}/owners", name))?;
         let resp: Owners = self.get(url)?;
         Ok(resp.users)
@@ -161,7 +172,7 @@ impl SyncClient {
     /// Note: Since the reverse dependency endpoint requires pagination, this
     /// will result in multiple requests if the crate has more than 100 reverse
     /// dependencies.
-    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<Vec<Dependency>> {
+    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<Vec<Dependency>, Error> {
         let mut page = 1;
         let mut deps = Vec::new();
         loop {
@@ -181,7 +192,7 @@ impl SyncClient {
     }
 
     /// Retrieve the authors for a crate version.
-    pub fn crate_authors(&self, name: &str, version: &str) -> Result<Authors> {
+    pub fn crate_authors(&self, name: &str, version: &str) -> Result<Authors, Error> {
         let url = self.base_url
             .join(&format!("crates/{}/{}/authors", name, version))?;
         let res: AuthorsResponse = self.get(url)?;
@@ -192,14 +203,14 @@ impl SyncClient {
     }
 
     /// Retrieve the dependencies of a crate version.
-    pub fn crate_dependencies(&self, name: &str, version: &str) -> Result<Vec<Dependency>> {
+    pub fn crate_dependencies(&self, name: &str, version: &str) -> Result<Vec<Dependency>, Error> {
         let url = self.base_url
             .join(&format!("crates/{}/{}/dependencies", name, version))?;
         let resp: Dependencies = self.get(url)?;
         Ok(resp.dependencies)
     }
 
-    fn full_version(&self, version: Version) -> Result<FullVersion> {
+    fn full_version(&self, version: Version) -> Result<FullVersion, Error> {
         let authors = self.crate_authors(&version.crate_name, &version.num)?;
         let deps = self.crate_dependencies(&version.crate_name, &version.num)?;
 
@@ -230,7 +241,7 @@ impl SyncClient {
     /// If false, only the data for the latest version will be fetched, if true,
     /// detailed information for all versions will be available.
     /// Note: Each version requires two extra requests.
-    pub fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate> {
+    pub fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate, Error> {
         let resp = self.get_crate(name)?;
         let data = resp.crate_data;
 
@@ -249,7 +260,7 @@ impl SyncClient {
             resp.versions
                 .into_iter()
                 .map(|v| self.full_version(v))
-                .collect::<Result<Vec<FullVersion>>>()?
+                .collect::<Result<Vec<FullVersion>, Error>>()?
         };
 
         let full = FullCrate {
@@ -300,7 +311,7 @@ impl SyncClient {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse> {
+    pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse, Error> {
         let mut url = self.base_url.join("crates")?;
         {
             let mut q = url.query_pairs_mut();
@@ -318,7 +329,7 @@ impl SyncClient {
     ///
     /// Note: This method fetches all pages of the result.
     /// This can result in a lot queries (100 results per query).
-    pub fn all_crates(&self, query: Option<String>) -> Result<Vec<Crate>> {
+    pub fn all_crates(&self, query: Option<String>) -> Result<Vec<Crate>, Error> {
         let mut page = 1;
         let mut crates = Vec::new();
         loop {
