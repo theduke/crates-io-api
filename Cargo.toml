@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = [ "crates", "api" ]
 categories = [ "web-programming", "web-programming::http-client" ]
 
-version = "0.1.0"
+version = "0.2.0"
 
 [dependencies]
 chrono = { version = "0.4.*", features = ["serde"] }

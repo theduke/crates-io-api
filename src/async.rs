@@ -6,7 +6,7 @@ use tokio_core::reactor::Handle;
 use super::Error;
 use types::*;
 
-/// A synchronous client for the crates.io API.
+/// Asynchronous client for the crates.io API.
 #[derive(Clone)]
 pub struct Client {
     client: async::Client,
@@ -14,7 +14,7 @@ pub struct Client {
 }
 
 impl Client {
-    /// Instantiate a new synchronous API client.
+    /// Instantiate a new client.
     ///
     /// This will fail if the underlying http client could not be created.
     pub fn new(handle: &Handle) -> Self {
@@ -277,10 +277,12 @@ impl Client {
             .flatten_stream()
     }
 
-    /// Retrieve all crates, optionally constrained by a query.
+    /// Retrieve all crates with all available extra information.
     ///
-    /// Note: This method fetches all pages of the result.
-    /// This can result in a lot queries (100 results per query).
+    /// Note: This method fetches not only all crates, but does multiple requests for each crate
+    /// to retrieve extra information.
+    ///
+    /// This can result in A LOT of queries.
     pub fn all_crates_full(
         &self,
         query: Option<String>,
