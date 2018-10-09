@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 - 2018/10/09
+
+* Upgrade reqwest to 0.9
+* Upgrade to tokio instead of tokio_core
+
 ## 0.2.0 - 2018/04/29
 
 * Add AsyncClient
