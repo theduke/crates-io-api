@@ -92,7 +92,8 @@ impl SyncClient {
 
     /// Retrieve the authors for a crate version.
     pub fn crate_authors(&self, name: &str, version: &str) -> Result<Authors, Error> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("crates/{}/{}/authors", name, version))?;
         let res: AuthorsResponse = self.get(url)?;
         Ok(Authors {
@@ -103,7 +104,8 @@ impl SyncClient {
 
     /// Retrieve the dependencies of a crate version.
     pub fn crate_dependencies(&self, name: &str, version: &str) -> Result<Vec<Dependency>, Error> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("crates/{}/{}/dependencies", name, version))?;
         let resp: Dependencies = self.get(url)?;
         Ok(resp.dependencies)

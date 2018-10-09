@@ -32,7 +32,7 @@
 //! }
 //! ```
 
-#![recursion_limit="128"]
+#![recursion_limit = "128"]
 
 #[macro_use]
 extern crate failure;

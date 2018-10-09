@@ -57,7 +57,8 @@ impl Client {
 
     /// Retrieve download stats for a crate.
     pub fn crate_downloads(&self, name: &str) -> impl Future<Item = Downloads, Error = Error> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("crates/{}/downloads", name))
             .unwrap();
         self.get(url)
@@ -65,7 +66,8 @@ impl Client {
 
     /// Retrieve the owners of a crate.
     pub fn crate_owners(&self, name: &str) -> impl Future<Item = Vec<User>, Error = Error> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("crates/{}/owners", name))
             .unwrap();
         self.get::<Owners>(url).map(|data| data.users)
@@ -86,7 +88,8 @@ impl Client {
             mut deps: Vec<Dependency>,
             page: u64,
         ) -> impl Future<Item = Vec<Dependency>, Error = Error> + Send {
-            let url = c.base_url
+            let url = c
+                .base_url
                 .join(&format!(
                     "crates/{}/reverse_dependencies?per_page=100&page={}",
                     name, page
@@ -113,7 +116,8 @@ impl Client {
         name: &str,
         version: &str,
     ) -> impl Future<Item = Authors, Error = Error> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("crates/{}/{}/authors", name, version))
             .unwrap();
         self.get::<AuthorsResponse>(url).map(|res| Authors {
@@ -128,7 +132,8 @@ impl Client {
         name: &str,
         version: &str,
     ) -> impl Future<Item = Vec<Dependency>, Error = Error> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("crates/{}/{}/dependencies", name, version))
             .unwrap();
         self.get::<Dependencies>(url).map(|res| res.dependencies)
@@ -171,7 +176,9 @@ impl Client {
     ) -> impl Future<Item = FullCrate, Error = Error> {
         let c = self.clone();
         let crate_and_versions = self.get_crate(name).and_then(
-            move |info| -> Box<Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error> + Send> {
+            move |info| -> Box<
+                Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error> + Send,
+            > {
                 if all_versions == false {
                     Box::new(
                         c.full_version(info.versions[0].clone())
@@ -185,7 +192,8 @@ impl Client {
                                 .into_iter()
                                 .map(|v| c.full_version(v))
                                 .collect::<Vec<_>>(),
-                        ).map(|versions| (info, versions)),
+                        )
+                        .map(|versions| (info, versions)),
                     )
                 }
             },
@@ -310,7 +318,9 @@ mod test {
             let _ = rt.block_on(client.full_crate(&item.name, false)).unwrap();
         }
 
-        let crates = rt.block_on(client.all_crates(None).take(3).collect()).unwrap();
+        let crates = rt
+            .block_on(client.all_crates(None).take(3).collect())
+            .unwrap();
         println!("{:?}", crates);
     }
 }
