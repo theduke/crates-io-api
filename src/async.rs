@@ -1,7 +1,6 @@
 use futures::{future, stream, Future, Stream};
-use reqwest::{unstable::async, StatusCode, Url};
+use reqwest::{async, StatusCode, Url};
 use serde::de::DeserializeOwned;
-use tokio_core::reactor::Handle;
 
 use super::Error;
 use types::*;
@@ -17,9 +16,9 @@ impl Client {
     /// Instantiate a new client.
     ///
     /// This will fail if the underlying http client could not be created.
-    pub fn new(handle: &Handle) -> Self {
+    pub fn new() -> Self {
         let c = Self {
-            client: async::Client::new(handle),
+            client: async::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         };
         c
@@ -33,7 +32,7 @@ impl Client {
             .send()
             .map_err(Error::from)
             .and_then(|res| {
-                if res.status() == StatusCode::NotFound {
+                if res.status() == StatusCode::NOT_FOUND {
                     return Err(Error::NotFound);
                 }
                 let res = res.error_for_status()?;
@@ -86,7 +85,7 @@ impl Client {
             name: String,
             mut deps: Vec<Dependency>,
             page: u64,
-        ) -> impl Future<Item = Vec<Dependency>, Error = Error> {
+        ) -> impl Future<Item = Vec<Dependency>, Error = Error> + Send {
             let url = c.base_url
                 .join(&format!(
                     "crates/{}/reverse_dependencies?per_page=100&page={}",
@@ -94,7 +93,7 @@ impl Client {
                 ))
                 .unwrap();
             c.get::<Dependencies>(url).and_then(
-                move |data| -> Box<Future<Item = Vec<Dependency>, Error = Error>> {
+                move |data| -> Box<Future<Item = Vec<Dependency>, Error = Error> + Send> {
                     if data.dependencies.len() > 0 {
                         deps.extend(data.dependencies);
                         Box::new(fetch_page(c, name, deps, page + 1))
@@ -172,7 +171,7 @@ impl Client {
     ) -> impl Future<Item = FullCrate, Error = Error> {
         let c = self.clone();
         let crate_and_versions = self.get_crate(name).and_then(
-            move |info| -> Box<Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error>> {
+            move |info| -> Box<Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error> + Send> {
                 if all_versions == false {
                     Box::new(
                         c.full_version(info.versions[0].clone())
@@ -300,17 +299,18 @@ mod test {
 
     #[test]
     fn test_client() {
-        let mut core = ::tokio_core::reactor::Core::new().unwrap();
-        let client = Client::new(&core.handle());
+        let mut rt = ::tokio::runtime::Runtime::new().unwrap();
 
-        let summary = core.run(client.summary()).unwrap();
+        let client = Client::new();
+
+        let summary = rt.block_on(client.summary()).unwrap();
         assert!(summary.most_downloaded.len() > 0);
 
         for item in &summary.most_downloaded[0..3] {
-            let _ = core.run(client.full_crate(&item.name, false)).unwrap();
+            let _ = rt.block_on(client.full_crate(&item.name, false)).unwrap();
         }
 
-        let crates = core.run(client.all_crates(None).take(3).collect()).unwrap();
+        let crates = rt.block_on(client.all_crates(None).take(3).collect()).unwrap();
         println!("{:?}", crates);
     }
 }

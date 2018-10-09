@@ -32,6 +32,8 @@
 //! }
 //! ```
 
+#![recursion_limit="128"]
+
 #[macro_use]
 extern crate failure;
 extern crate serde;
@@ -43,7 +45,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate log;
 extern crate futures;
-extern crate tokio_core;
+extern crate tokio;
 extern crate url;
 
 mod async;

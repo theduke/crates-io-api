@@ -29,7 +29,7 @@ impl SyncClient {
         let mut res = {
             let res = self.client.get(url).send()?;
 
-            if res.status() == StatusCode::NotFound {
+            if res.status() == StatusCode::NOT_FOUND {
                 return Err(Error::NotFound);
             }
             res.error_for_status()?
