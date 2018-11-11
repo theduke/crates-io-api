@@ -99,6 +99,7 @@ pub struct Version {
     pub id: u64,
     pub num: String,
     pub yanked: bool,
+    pub license: Option<String>,
     pub readme_path: Option<String>,
     pub links: VersionLinks,
 }
@@ -228,6 +229,7 @@ pub struct FullVersion {
     pub id: u64,
     pub num: String,
     pub yanked: bool,
+    pub license: Option<String>,
     pub readme_path: Option<String>,
     pub links: VersionLinks,
 
