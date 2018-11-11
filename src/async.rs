@@ -152,6 +152,7 @@ impl Client {
             id: version.id,
             num: version.num,
             yanked: version.yanked,
+            license: version.license,
             links: version.links,
             readme_path: version.readme_path,
 
@@ -211,7 +212,7 @@ impl Client {
                     id: data.id,
                     name: data.name,
                     description: data.description,
-                    license: data.license,
+                    license: resp.versions[0].license.clone(),
                     documentation: data.documentation,
                     homepage: data.homepage,
                     repository: data.repository,
