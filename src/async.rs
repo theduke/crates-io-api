@@ -17,11 +17,10 @@ impl Client {
     ///
     /// This will fail if the underlying http client could not be created.
     pub fn new() -> Self {
-        let c = Self {
+        Self {
             client: async::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
-        };
-        c
+        }
     }
 
     pub fn with_user_agent(user_agent: &str) -> Self {
@@ -39,7 +38,7 @@ impl Client {
         }
     }
 
-    fn get<T: DeserializeOwned>(&self, url: Url) -> impl Future<Item = T, Error = Error> {
+    fn get<T: DeserializeOwned>(&self, url: &Url) -> impl Future<Item = T, Error = Error> {
         trace!("GET {}", url);
 
         self.client
@@ -59,7 +58,7 @@ impl Client {
     /// Retrieve a summary containing crates.io wide information.
     pub fn summary(&self) -> impl Future<Item = Summary, Error = Error> {
         let url = self.base_url.join("summary").unwrap();
-        self.get(url)
+        self.get(&url)
     }
 
     /// Retrieve information of a crate.
@@ -67,7 +66,7 @@ impl Client {
     /// If you require detailed information, consider using [full_crate]().
     pub fn get_crate(&self, name: &str) -> impl Future<Item = CrateResponse, Error = Error> {
         let url = self.base_url.join("crates/").unwrap().join(name).unwrap();
-        self.get(url)
+        self.get(&url)
     }
 
     /// Retrieve download stats for a crate.
@@ -76,7 +75,7 @@ impl Client {
             .base_url
             .join(&format!("crates/{}/downloads", name))
             .unwrap();
-        self.get(url)
+        self.get(&url)
     }
 
     /// Retrieve the owners of a crate.
@@ -85,7 +84,7 @@ impl Client {
             .base_url
             .join(&format!("crates/{}/owners", name))
             .unwrap();
-        self.get::<Owners>(url).map(|data| data.users)
+        self.get::<Owners>(&url).map(|data| data.users)
     }
 
     /// Load all reverse dependencies of a crate.
@@ -110,9 +109,9 @@ impl Client {
                     name, page
                 ))
                 .unwrap();
-            c.get::<Dependencies>(url).and_then(
+            c.get::<Dependencies>(&url).and_then(
                 move |data| -> Box<Future<Item = Vec<Dependency>, Error = Error> + Send> {
-                    if data.dependencies.len() > 0 {
+                    if !data.dependencies.is_empty() {
                         deps.extend(data.dependencies);
                         Box::new(fetch_page(c, name, deps, page + 1))
                     } else {
@@ -135,7 +134,7 @@ impl Client {
             .base_url
             .join(&format!("crates/{}/{}/authors", name, version))
             .unwrap();
-        self.get::<AuthorsResponse>(url).map(|res| Authors {
+        self.get::<AuthorsResponse>(&url).map(|res| Authors {
             names: res.meta.names,
             users: res.users,
         })
@@ -151,7 +150,7 @@ impl Client {
             .base_url
             .join(&format!("crates/{}/{}/dependencies", name, version))
             .unwrap();
-        self.get::<Dependencies>(url).map(|res| res.dependencies)
+        self.get::<Dependencies>(&url).map(|res| res.dependencies)
     }
 
     fn full_version(&self, version: Version) -> impl Future<Item = FullVersion, Error = Error> {
@@ -195,7 +194,7 @@ impl Client {
             move |info| -> Box<
                 Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error> + Send,
             > {
-                if all_versions == false {
+                if !all_versions {
                     Box::new(
                         c.full_version(info.versions[0].clone())
                             .map(|v| (info, vec![v])),
@@ -241,8 +240,7 @@ impl Client {
                     downloads: dls,
                     owners,
                     reverse_dependencies,
-
-                    versions: versions,
+                    versions,
                 }
             })
     }
@@ -264,7 +262,7 @@ impl Client {
                 q.append_pair("q", &query);
             }
         }
-        self.get(url)
+        self.get(&url)
     }
 
     /// Retrieve all crates, optionally constrained by a query.
@@ -273,7 +271,7 @@ impl Client {
     /// This can result in a lot queries (100 results per query).
     pub fn all_crates(&self, query: Option<String>) -> impl Stream<Item = Crate, Error = Error> {
         let opts = ListOptions {
-            query: query.clone(),
+            query,
             sort: Sort::Alphabetical,
             per_page: 100,
             page: 1,
@@ -284,10 +282,9 @@ impl Client {
             .and_then(move |res| {
                 let pages = (res.meta.total as f64 / 100.0).ceil() as u64;
                 let streams_futures = (1..pages)
-                    .into_iter()
                     .map(|page| {
                         let opts = ListOptions {
-                            page: page,
+                            page,
                             ..opts.clone()
                         };
                         c.crates(opts)

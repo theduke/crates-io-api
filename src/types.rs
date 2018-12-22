@@ -3,7 +3,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use std::collections::HashMap;
 
-/// Used to specify the sort behaviour of the Client::crates() method.
+/// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Debug, Clone)]
 pub enum Sort {
     /// Sort alphabetically.
