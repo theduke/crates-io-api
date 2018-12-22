@@ -1,14 +1,15 @@
 use futures::{future, stream, Future, Stream};
-use reqwest::{async, header, StatusCode, Url};
+use log::trace;
+use reqwest::{header, r#async, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use super::Error;
-use types::*;
+use crate::types::*;
 
 /// Asynchronous client for the crates.io API.
 #[derive(Clone)]
 pub struct Client {
-    client: async::Client,
+    client: r#async::Client,
     base_url: Url,
 }
 
@@ -18,7 +19,7 @@ impl Client {
     /// This will fail if the underlying http client could not be created.
     pub fn new() -> Self {
         Self {
-            client: async::Client::new(),
+            client: r#async::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         }
     }
@@ -30,7 +31,7 @@ impl Client {
             header::HeaderValue::from_str(user_agent).unwrap(),
         );
         Self {
-            client: async::Client::builder()
+            client: r#async::Client::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),

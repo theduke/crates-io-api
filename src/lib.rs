@@ -34,27 +34,15 @@
 
 #![recursion_limit = "128"]
 
-#[macro_use]
-extern crate failure;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate chrono;
-extern crate reqwest;
-extern crate serde_json;
-#[macro_use]
-extern crate log;
-extern crate futures;
-extern crate tokio;
-extern crate url;
+use failure::Fail;
 
-mod async;
+mod r#async;
 mod sync;
 mod types;
 
-pub use async::Client as AsyncClient;
-pub use sync::SyncClient;
-pub use types::*;
+pub use crate::r#async::Client as AsyncClient;
+pub use crate::sync::SyncClient;
+pub use crate::types::*;
 
 #[derive(Fail, Debug)]
 pub enum Error {

@@ -1,6 +1,7 @@
 //! Types for the data that is available via the API.
 
 use chrono::{DateTime, NaiveDate, Utc};
+use serde_derive::*;
 use std::collections::HashMap;
 
 /// Used to specify the sort behaviour of the `Client::crates()` method.

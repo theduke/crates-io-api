@@ -1,10 +1,11 @@
 use super::*;
 use std::iter::Extend;
 
+use log::trace;
 use reqwest::{header, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
-use types::*;
+use crate::types::*;
 
 /// A synchronous client for the crates.io API.
 pub struct SyncClient {
