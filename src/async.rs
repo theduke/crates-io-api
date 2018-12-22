@@ -1,5 +1,5 @@
 use futures::{future, stream, Future, Stream};
-use reqwest::{async, StatusCode, Url};
+use reqwest::{async, header, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use super::Error;
@@ -22,6 +22,21 @@ impl Client {
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         };
         c
+    }
+
+    pub fn with_user_agent(user_agent: &str) -> Self {
+        let mut headers = header::HeaderMap::new();
+        headers.insert(
+            header::USER_AGENT,
+            header::HeaderValue::from_str(user_agent).unwrap(),
+        );
+        Self {
+            client: async::Client::builder()
+                .default_headers(headers)
+                .build()
+                .unwrap(),
+            base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
+        }
     }
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> impl Future<Item = T, Error = Error> {

@@ -62,6 +62,8 @@ pub enum Error {
     Http(reqwest::Error),
     #[fail(display = "{}", _0)]
     Url(url::ParseError),
+    #[fail(display = "{}", _0)]
+    InvalidHeader(reqwest::header::InvalidHeaderValue),
     #[fail(display = "Not found")]
     NotFound,
 }
@@ -75,5 +77,11 @@ impl From<reqwest::Error> for Error {
 impl From<url::ParseError> for Error {
     fn from(e: url::ParseError) -> Self {
         Error::Url(e)
+    }
+}
+
+impl From<reqwest::header::InvalidHeaderValue> for Error {
+    fn from(e: reqwest::header::InvalidHeaderValue) -> Self {
+        Error::InvalidHeader(e)
     }
 }
