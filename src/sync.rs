@@ -17,11 +17,10 @@ impl SyncClient {
     ///
     /// This will fail if the underlying http client could not be created.
     pub fn new() -> Self {
-        let c = SyncClient {
+        Self {
             client: reqwest::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
-        };
-        c
+        }
     }
 
     pub fn with_user_agent(user_agent: &str) -> Self {
@@ -95,7 +94,7 @@ impl SyncClient {
                 name, page
             ))?;
             let res: Dependencies = self.get(url)?;
-            if res.dependencies.len() > 0 {
+            if !res.dependencies.is_empty() {
                 deps.extend(res.dependencies);
                 page += 1;
             } else {
@@ -166,17 +165,17 @@ impl SyncClient {
         let owners = self.crate_owners(name)?;
         let reverse_dependencies = self.crate_reverse_dependencies(name)?;
 
-        let versions = if resp.versions.len() < 1 {
+        let versions = if resp.versions.is_empty() {
             vec![]
-        } else if !all_versions {
-            let v = self.full_version(resp.versions[0].clone())?;
-            vec![v]
-        } else {
+        } else if all_versions {
             //let versions_res: Result<Vec<FullVersion>> = resp.versions
             resp.versions
                 .into_iter()
                 .map(|v| self.full_version(v))
                 .collect::<Result<Vec<FullVersion>, Error>>()?
+        } else {
+            let v = self.full_version(resp.versions[0].clone())?;
+            vec![v]
         };
 
         let full = FullCrate {
@@ -197,8 +196,7 @@ impl SyncClient {
             downloads: dls,
             owners,
             reverse_dependencies,
-
-            versions: versions,
+            versions,
         };
         Ok(full)
     }
@@ -254,7 +252,7 @@ impl SyncClient {
                 query: query.clone(),
                 sort: Sort::Alphabetical,
                 per_page: 100,
-                page: page,
+                page,
             })?;
             if res.crates.is_empty() {
                 crates.extend(res.crates);
