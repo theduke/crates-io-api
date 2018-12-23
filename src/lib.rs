@@ -36,12 +36,12 @@
 
 use failure::Fail;
 
-mod r#async;
-mod sync;
+mod async_client;
+mod sync_client;
 mod types;
 
-pub use crate::r#async::Client as AsyncClient;
-pub use crate::sync::SyncClient;
+pub use crate::async_client::Client as AsyncClient;
+pub use crate::sync_client::SyncClient;
 pub use crate::types::*;
 
 #[derive(Fail, Debug)]
