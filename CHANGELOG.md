@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 - 2019/03/01
+
+* Added `with_user_agent` method to client
+* Switch to 2018 edition, requiring rustc 1.31+
+
 ## 0.3.0 - 2018/10/09
 
 * Upgrade reqwest to 0.9
