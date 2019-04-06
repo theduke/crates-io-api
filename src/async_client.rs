@@ -218,10 +218,14 @@ impl Client {
         let dls = self.crate_downloads(name);
         let owners = self.crate_owners(name);
         let reverse_dependencies = self.crate_reverse_dependencies(name);
+        // TODO:
+        // let (reverse_dependencies, reverse_dependencies_versions, reverse_dependencies_total) = self.crate_reverse_dependencies(name);
+        let reverse_dependencies_versions = Vec::new();
+        let reverse_dependencies_meta = Meta {total:0};
 
         crate_and_versions
             .join4(dls, owners, reverse_dependencies)
-            .map(|((resp, versions), dls, owners, reverse_dependencies)| {
+            .map(move |((resp, versions), dls, owners, reverse_dependencies)| {
                 let data = resp.crate_data;
                 FullCrate {
                     id: data.id,
@@ -241,6 +245,8 @@ impl Client {
                     downloads: dls,
                     owners,
                     reverse_dependencies,
+                    reverse_dependencies_versions,
+                    reverse_dependencies_meta,
                     versions,
                 }
             })

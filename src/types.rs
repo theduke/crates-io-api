@@ -103,6 +103,8 @@ pub struct Version {
     pub license: Option<String>,
     pub readme_path: Option<String>,
     pub links: VersionLinks,
+    pub crate_size: Option<u64>,
+    pub published_by: Option<User>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -174,7 +176,7 @@ pub struct User {
     pub avatar: Option<String>,
     pub email: Option<String>,
     pub id: u64,
-    pub kind: String,
+    pub kind: Option<String>,
     pub login: String,
     pub name: Option<String>,
     pub url: String,
@@ -218,6 +220,8 @@ pub struct Dependency {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Dependencies {
     pub dependencies: Vec<Dependency>,
+    pub versions: Vec<Version>,
+    pub meta: Meta,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -258,6 +262,8 @@ pub struct FullCrate {
     pub downloads: Downloads,
     pub owners: Vec<User>,
     pub reverse_dependencies: Vec<Dependency>,
+    pub reverse_dependencies_versions: Vec<Version>,
+    pub reverse_dependencies_meta: Meta,
 
     pub versions: Vec<FullVersion>,
 }

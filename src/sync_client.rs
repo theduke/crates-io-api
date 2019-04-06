@@ -86,9 +86,11 @@ impl SyncClient {
     /// Note: Since the reverse dependency endpoint requires pagination, this
     /// will result in multiple requests if the crate has more than 100 reverse
     /// dependencies.
-    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<Vec<Dependency>, Error> {
+    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<(Vec<Dependency>, Vec<Version>, Meta), Error> {
         let mut page = 1;
         let mut deps = Vec::new();
+        let mut vers = Vec::new();
+        let mut meta = Meta {total:0};
         loop {
             let url = self.base_url.join(&format!(
                 "crates/{}/reverse_dependencies?per_page=100&page={}",
@@ -97,12 +99,14 @@ impl SyncClient {
             let res: Dependencies = self.get(url)?;
             if !res.dependencies.is_empty() {
                 deps.extend(res.dependencies);
+                vers.extend(res.versions);
+                meta = res.meta;
                 page += 1;
             } else {
                 break;
             }
         }
-        Ok(deps)
+        Ok((deps, vers, meta))
     }
 
     /// Retrieve the authors for a crate version.
@@ -164,7 +168,9 @@ impl SyncClient {
 
         let dls = self.crate_downloads(name)?;
         let owners = self.crate_owners(name)?;
-        let reverse_dependencies = self.crate_reverse_dependencies(name)?;
+        let (reverse_dependencies,
+             reverse_dependencies_versions,
+             reverse_dependencies_meta) = self.crate_reverse_dependencies(name).unwrap();
 
         let versions = if resp.versions.is_empty() {
             vec![]
@@ -197,6 +203,8 @@ impl SyncClient {
             downloads: dls,
             owners,
             reverse_dependencies,
+            reverse_dependencies_versions,
+            reverse_dependencies_meta,
             versions,
         };
         Ok(full)
