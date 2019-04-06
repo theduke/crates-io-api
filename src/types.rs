@@ -150,7 +150,6 @@ pub struct Summary {
 pub struct VersionDownloads {
     pub date: NaiveDate,
     pub downloads: u64,
-    pub id: u64,
     pub version: u64,
 }
 
