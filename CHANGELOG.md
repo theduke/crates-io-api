@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 - 2019/03/09
+
+* Fixed errors for version information due to the `id` field being removed from the API.  [PR #11](https://github.com/theduke/crates_io_api/pull/11)
+
 ## 0.4.0 - 2019/03/01
 
 * Added `with_user_agent` method to client
