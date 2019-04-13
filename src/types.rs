@@ -66,6 +66,7 @@ pub struct Crate {
     // TODO: determine badge format.
     // pub badges: Vec<??>,
     pub downloads: u64,
+    pub recent_downloads: Option<u64>,
     pub categories: Option<Vec<String>>,
     pub keywords: Option<Vec<String>>,
     pub versions: Option<Vec<u64>>,
@@ -73,6 +74,7 @@ pub struct Crate {
     pub links: CrateLinks,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub exact_match: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -103,6 +105,8 @@ pub struct Version {
     pub license: Option<String>,
     pub readme_path: Option<String>,
     pub links: VersionLinks,
+    pub crate_size: Option<u64>,
+    pub published_by: Option<User>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -173,7 +177,7 @@ pub struct User {
     pub avatar: Option<String>,
     pub email: Option<String>,
     pub id: u64,
-    pub kind: String,
+    pub kind: Option<String>,
     pub login: String,
     pub name: Option<String>,
     pub url: String,
