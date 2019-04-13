@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 - 2019/03/13
+
+* Add 4 missing type fields for Crate {recent_downloads, exact_match} and Version {crate_size, published_by}
+* Make field optional: User {kind} 
+
 ## 0.4.1 - 2019/03/09
 
 * Fixed errors for version information due to the `id` field being removed from the API.  [PR #11](https://github.com/theduke/crates_io_api/pull/11)
