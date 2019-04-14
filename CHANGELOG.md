@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-* Add 4 missing type fields for Crate {recent_downloads, exact_match} and Version {crate_size, published_by}
+* Add 7 missing type fields for:
+  * Crate {recent_downloads, exact_match}
+  * CrateResponse {versions, keywords, categories}
+  * Version {crate_size, published_by}
 * Make field optional: User {kind} 
 
 ## 0.4.1 - 2019/03/09
