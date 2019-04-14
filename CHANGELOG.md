@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.2 - 2019/03/13
+## Unreleased
 
 * Add 4 missing type fields for Crate {recent_downloads, exact_match} and Version {crate_size, published_by}
 * Make field optional: User {kind} 
