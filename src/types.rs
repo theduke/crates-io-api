@@ -224,6 +224,27 @@ pub struct Dependencies {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReverseDependency {
+  pub crate_version: Version,
+  pub dependency: Dependency,
+}
+
+// This is how reverse dependencies are received
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReverseDependenciesAsReceived {
+    pub dependencies: Vec<Dependency>,
+    pub versions: Vec<Version>,
+    pub meta: Meta
+}
+
+// This is how reverse dependencies are presented
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReverseDependencies {
+    pub dependencies: Vec<ReverseDependency>,
+    pub meta: Meta
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullVersion {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -260,7 +281,7 @@ pub struct FullCrate {
     pub keywords: Vec<Keyword>,
     pub downloads: Downloads,
     pub owners: Vec<User>,
-    pub reverse_dependencies: Vec<Dependency>,
+    pub reverse_dependencies: ReverseDependencies,
 
     pub versions: Vec<FullVersion>,
 }

@@ -86,23 +86,42 @@ impl SyncClient {
     /// Note: Since the reverse dependency endpoint requires pagination, this
     /// will result in multiple requests if the crate has more than 100 reverse
     /// dependencies.
-    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<Vec<Dependency>, Error> {
+    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<ReverseDependencies, Error> {
         let mut page = 1;
-        let mut deps = Vec::new();
+        let mut rdeps: ReverseDependenciesAsReceived;
+        let mut tidy_rdeps = ReverseDependencies {dependencies: Vec::new(), meta: Meta {total:0}};
+
         loop {
             let url = self.base_url.join(&format!(
                 "crates/{}/reverse_dependencies?per_page=100&page={}",
                 name, page
             ))?;
-            let res: Dependencies = self.get(url)?;
-            if !res.dependencies.is_empty() {
-                deps.extend(res.dependencies);
+
+            rdeps = self.get(url)?;
+
+            // match each dependency in deps with its version in vers
+            for d in rdeps.dependencies.iter() {
+                for v in rdeps.versions.iter() {
+                    if v.id == d.version_id {
+                        // Right now it iterates over the full vector for each vector element.
+                        // For large vectors, it may be faster to remove each matched element
+                        // using the drain_filter() method once it's stabilized:
+                        // https://doc.rust-lang.org/nightly/std/vec/struct.Vec.html#method.drain_filter
+                        tidy_rdeps.dependencies.push(
+                            ReverseDependency {crate_version: v.clone(), dependency: d.clone()}
+                        );
+                    }
+                }
+            }
+
+            if !rdeps.dependencies.is_empty() {
+                tidy_rdeps.meta = rdeps.meta;
                 page += 1;
             } else {
                 break;
             }
         }
-        Ok(deps)
+        Ok(tidy_rdeps)
     }
 
     /// Retrieve the authors for a crate version.
