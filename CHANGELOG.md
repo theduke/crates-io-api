@@ -4,6 +4,12 @@
 
 * Add 4 missing type fields for Crate {recent_downloads, exact_match} and Version {crate_size, published_by}
 * Make field optional: User {kind} 
+* Fix getting the reverse dependencies.
+  * Rearrange the received data for simpler manipulation.
+  * Add 3 new types:
+    * ReverseDependenciesAsReceived {dependencies, versions, meta}
+    * ReverseDependencies {dependencies, meta}
+    * ReverseDependency {crate_version, dependency}
 
 ## 0.4.1 - 2019/03/09
 
