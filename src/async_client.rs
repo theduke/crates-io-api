@@ -104,7 +104,7 @@ impl Client {
             )).unwrap();
 
             c.get::<ReverseDependenciesAsReceived>(&url).and_then(move |rdeps|
-                -> Box<Future<Item = ReverseDependencies, Error = Error> + Send> {
+                -> Box<dyn Future<Item = ReverseDependencies, Error = Error> + Send> {
 
                 tidy_rdeps.from_received(&rdeps);
 
