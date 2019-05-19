@@ -231,7 +231,7 @@ pub struct ReverseDependency {
 
 // This is how reverse dependencies are received
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ReverseDependenciesAsReceived {
+pub(super) struct ReverseDependenciesAsReceived {
     pub dependencies: Vec<Dependency>,
     pub versions: Vec<Version>,
     pub meta: Meta
