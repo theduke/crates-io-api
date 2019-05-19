@@ -80,9 +80,12 @@ pub struct Crate {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CratesResponse {
     pub crates: Vec<Crate>,
-    pub versions: Option<Vec<Version>>,
-    pub keywords: Option<Vec<Keyword>>,
-    pub categories: Option<Vec<Category>>,
+    #[serde(default)]
+    pub versions: Vec<Version>,
+    #[serde(default)]
+    pub keywords: Vec<Keyword>,
+    #[serde(default)]
+    pub categories: Vec<Category>,
     pub meta: Meta,
 }
 
