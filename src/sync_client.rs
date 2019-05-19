@@ -99,20 +99,7 @@ impl SyncClient {
 
             rdeps = self.get(url)?;
 
-            // match each dependency in deps with its version in vers
-            for d in rdeps.dependencies.iter() {
-                for v in rdeps.versions.iter() {
-                    if v.id == d.version_id {
-                        // Right now it iterates over the full vector for each vector element.
-                        // For large vectors, it may be faster to remove each matched element
-                        // using the drain_filter() method once it's stabilized:
-                        // https://doc.rust-lang.org/nightly/std/vec/struct.Vec.html#method.drain_filter
-                        tidy_rdeps.dependencies.push(
-                            ReverseDependency {crate_version: v.clone(), dependency: d.clone()}
-                        );
-                    }
-                }
-            }
+            tidy_rdeps.from_received(&rdeps);
 
             if !rdeps.dependencies.is_empty() {
                 tidy_rdeps.meta = rdeps.meta;
