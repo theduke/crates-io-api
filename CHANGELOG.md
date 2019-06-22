@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 - 2019/06/22
 
 * Add 7 missing type fields for:
   * Crate {recent_downloads, exact_match}
