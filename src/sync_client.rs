@@ -261,7 +261,7 @@ impl SyncClient {
                 per_page: 100,
                 page,
             })?;
-            if res.crates.is_empty() {
+            if !res.crates.is_empty() {
                 crates.extend(res.crates);
                 page += 1;
             } else {
