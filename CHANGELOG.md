@@ -1,5 +1,9 @@
 # Changelog
 
+** 0.5.1 - 2019-08-23
+
+* Fix faulty condition check in SyncClient::all_crates
+
 ## 0.5.0 - 2019/06/22
 
 * Add 7 missing type fields for:
