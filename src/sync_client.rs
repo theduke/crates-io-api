@@ -41,7 +41,7 @@ impl SyncClient {
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
         trace!("GET {}", url);
-        let mut res = {
+        let res = {
             let res = self.client.get(url).send()?;
 
             if res.status() == StatusCode::NOT_FOUND {
