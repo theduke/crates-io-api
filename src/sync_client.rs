@@ -9,7 +9,7 @@ use crate::types::*;
 
 /// A synchronous client for the crates.io API.
 pub struct SyncClient {
-    client: reqwest::Client,
+    client: reqwest::blocking::Client,
     base_url: Url,
 }
 
@@ -19,7 +19,7 @@ impl SyncClient {
     /// This will fail if the underlying http client could not be created.
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::blocking::Client::new(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         }
     }
@@ -31,7 +31,7 @@ impl SyncClient {
             header::HeaderValue::from_str(user_agent).unwrap(),
         );
         Self {
-            client: reqwest::Client::builder()
+            client: reqwest::blocking::Client::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
@@ -89,7 +89,10 @@ impl SyncClient {
     pub fn crate_reverse_dependencies(&self, name: &str) -> Result<ReverseDependencies, Error> {
         let mut page = 1;
         let mut rdeps: ReverseDependenciesAsReceived;
-        let mut tidy_rdeps = ReverseDependencies {dependencies: Vec::new(), meta: Meta {total:0}};
+        let mut tidy_rdeps = ReverseDependencies {
+            dependencies: Vec::new(),
+            meta: Meta { total: 0 },
+        };
 
         loop {
             let url = self.base_url.join(&format!(

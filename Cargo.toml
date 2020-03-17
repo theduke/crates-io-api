@@ -13,13 +13,13 @@ edition = "2018"
 version = "0.5.1"
 
 [dependencies]
-chrono = { version = "0.4.6", features = ["serde"] }
-reqwest = { version = "0.9" }
-serde = "1.0.79"
-serde_derive = "1.0.79"
-serde_json = "1.0.32"
-url = "1.7.1"
-log = "0.4.5"
-failure = "0.1.2"
-futures = "0.1.25"
-tokio = "0.1"
+chrono = { version = "0.4.11", features = ["serde"] }
+reqwest = {version = "0.10.4", features = ["blocking","json"] }
+serde = "1.0.104"
+serde_derive = "1.0.104"
+serde_json = "1.0.48"
+url = "2.1.1"
+log = "0.4.8"
+failure = "0.1.7"
+futures = "0.3.4"
+tokio = { version= "0.2.13", features = ["macros"] }
