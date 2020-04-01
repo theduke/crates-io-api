@@ -1,6 +1,7 @@
 use futures::{future, stream, Future, Stream};
+use futures03::future::{FutureExt, TryFutureExt};
 use log::trace;
-use reqwest::{header, r#async, StatusCode, Url};
+use reqwest::{header, Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use super::Error;
@@ -9,21 +10,33 @@ use crate::types::*;
 /// Asynchronous client for the crates.io API.
 #[derive(Clone)]
 pub struct Client {
-    client: r#async::Client,
+    client: HttpClient,
     base_url: Url,
 }
 
 impl Client {
     /// Instantiate a new client.
     ///
-    /// This will fail if the underlying http client could not be created.
+    /// This will panic if the underlying http client could not be created.
+    ///
+    /// The user agent will default to `crates_io_api/{crates_io_api version}`.
     pub fn new() -> Self {
+        let mut headers = header::HeaderMap::new();
+        // Crates.io requires a user agent or it will return 403's on all calls
+        headers.insert(
+            header::USER_AGENT,
+            header::HeaderValue::from_static(crate::DEFAULT_USER_AGENT),
+        );
         Self {
-            client: r#async::Client::new(),
+            client: HttpClient::builder()
+                .default_headers(headers)
+                .build()
+                .expect("Could not initialize HTTP client"),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         }
     }
 
+    /// Create a new client with a specific user agent
     pub fn with_user_agent(user_agent: &str) -> Self {
         let mut headers = header::HeaderMap::new();
         headers.insert(
@@ -31,7 +44,7 @@ impl Client {
             header::HeaderValue::from_str(user_agent).unwrap(),
         );
         Self {
-            client: r#async::Client::builder()
+            client: HttpClient::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
@@ -39,12 +52,17 @@ impl Client {
         }
     }
 
-    fn get<T: DeserializeOwned>(&self, url: &Url) -> impl Future<Item = T, Error = Error> {
+    fn get<T: DeserializeOwned + 'static>(
+        &self,
+        url: &Url,
+    ) -> impl Future<Item = T, Error = Error> {
         trace!("GET {}", url);
 
         self.client
             .get(url.clone())
             .send()
+            .boxed()
+            .compat()
             .map_err(Error::from)
             .and_then(|res| {
                 if res.status() == StatusCode::NOT_FOUND {
@@ -53,7 +71,7 @@ impl Client {
                 let res = res.error_for_status()?;
                 Ok(res)
             })
-            .and_then(|mut res| res.json().map_err(Error::from))
+            .and_then(|res| res.json().boxed().compat().map_err(Error::from))
     }
 
     /// Retrieve a summary containing crates.io wide information.
@@ -93,32 +111,47 @@ impl Client {
     /// Note: Since the reverse dependency endpoint requires pagination, this
     /// will result in multiple requests if the crate has more than 100 reverse
     /// dependencies.
-    pub fn crate_reverse_dependencies(&self, name: &str)
-        -> impl Future<Item = ReverseDependencies, Error = Error> {
+    pub fn crate_reverse_dependencies(
+        &self,
+        name: &str,
+    ) -> impl Future<Item = ReverseDependencies, Error = Error> {
+        fn fetch_page(
+            c: Client,
+            name: String,
+            mut tidy_rdeps: ReverseDependencies,
+            page: u64,
+        ) -> impl Future<Item = ReverseDependencies, Error = Error> + Send {
+            let url = c
+                .base_url
+                .join(&format!(
+                    "crates/{0}/reverse_dependencies?per_page=100&page={1}",
+                    name, page
+                ))
+                .unwrap();
 
-        fn fetch_page(c: Client, name: String, mut tidy_rdeps: ReverseDependencies, page: u64)
-            -> impl Future<Item = ReverseDependencies, Error = Error> + Send {
+            c.get::<ReverseDependenciesAsReceived>(&url).and_then(
+                move |rdeps| -> Box<dyn Future<Item = ReverseDependencies, Error = Error> + Send> {
+                    tidy_rdeps.from_received(&rdeps);
 
-            let url = c.base_url.join(&format!(
-                "crates/{0}/reverse_dependencies?per_page=100&page={1}", name, page
-            )).unwrap();
-
-            c.get::<ReverseDependenciesAsReceived>(&url).and_then(move |rdeps|
-                -> Box<dyn Future<Item = ReverseDependencies, Error = Error> + Send> {
-
-                tidy_rdeps.from_received(&rdeps);
-
-                if !rdeps.dependencies.is_empty() {
-                    tidy_rdeps.meta = rdeps.meta;
-                    Box::new(fetch_page(c, name, tidy_rdeps, page + 1))
-                } else {
-                    Box::new(::futures::future::ok(tidy_rdeps))
-                }
-            })
+                    if !rdeps.dependencies.is_empty() {
+                        tidy_rdeps.meta = rdeps.meta;
+                        Box::new(fetch_page(c, name, tidy_rdeps, page + 1))
+                    } else {
+                        Box::new(::futures::future::ok(tidy_rdeps))
+                    }
+                },
+            )
         }
 
-        fetch_page(self.clone(), name.to_string(), ReverseDependencies {
-            dependencies: Vec::new(), meta:Meta{total:0} }, 1)
+        fetch_page(
+            self.clone(),
+            name.to_string(),
+            ReverseDependencies {
+                dependencies: Vec::new(),
+                meta: Meta { total: 0 },
+            },
+            1,
+        )
     }
 
     /// Retrieve the authors for a crate version.
@@ -189,7 +222,7 @@ impl Client {
         let c = self.clone();
         let crate_and_versions = self.get_crate(name).and_then(
             move |info| -> Box<
-                Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error> + Send,
+                dyn Future<Item = (CrateResponse, Vec<FullVersion>), Error = Error> + Send,
             > {
                 if !all_versions {
                     Box::new(
@@ -245,9 +278,7 @@ impl Client {
     /// Retrieve a page of crates, optionally constrained by a query.
     ///
     /// If you want to get all results without worrying about paging,
-    /// use [all_crates]().
-    ///
-    /// ```
+    /// use [`all_crates`].
     pub fn crates(&self, spec: ListOptions) -> impl Future<Item = CratesResponse, Error = Error> {
         let mut url = self.base_url.join("crates").unwrap();
         {
@@ -314,23 +345,56 @@ impl Client {
 #[cfg(test)]
 mod test {
     use super::*;
+    use futures03::{
+        compat::{Future01CompatExt, Stream01CompatExt},
+        stream::StreamExt,
+    };
+    #[test]
+    fn list_top_dependencies_async() -> Result<(), Error> {
+        // Create tokio runtime
+        let mut rt = tokio::runtime::Runtime::new().unwrap();
+
+        // Instantiate the client.
+        let client = Client::new();
+        // Retrieve summary data.
+        let summary = rt.block_on(client.summary().compat())?;
+        for c in summary.most_downloaded {
+            println!("{}:", c.id);
+            for dep in rt.block_on(client.crate_dependencies(&c.id, &c.max_version).compat())? {
+                // Ignore optional dependencies.
+                if !dep.optional {
+                    println!("    * {} - {}", dep.id, dep.version_id);
+                }
+            }
+        }
+        Ok(())
+    }
 
     #[test]
-    fn test_client() {
+    fn test_client_async() {
+        println!("Async Client test: Starting runtime");
         let mut rt = ::tokio::runtime::Runtime::new().unwrap();
 
+        println!("Creating client");
         let client = Client::new();
 
-        let summary = rt.block_on(client.summary()).unwrap();
+        println!("Getting summary");
+        let summary = rt.block_on(client.summary().compat()).unwrap();
         assert!(summary.most_downloaded.len() > 0);
 
+        println!("Getting three most downloaded crates");
         for item in &summary.most_downloaded[0..3] {
-            let _ = rt.block_on(client.full_crate(&item.name, false)).unwrap();
+            println!("Geting crate: {}", &item.name);
+            let _ = rt
+                .block_on(client.full_crate(&item.name, false).compat())
+                .unwrap();
         }
 
-        let crates = rt
-            .block_on(client.all_crates(None).take(3).collect())
-            .unwrap();
-        println!("{:?}", crates);
+        println!("Getting three crates from `all_crates`");
+        let crates = rt.block_on(client.all_crates(None).compat().take(3).collect::<Vec<_>>());
+        for c in crates {
+            let c = c.unwrap();
+            println!("Crate: {:#?}", c);
+        }
     }
 }

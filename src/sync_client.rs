@@ -2,28 +2,40 @@ use super::*;
 use std::iter::Extend;
 
 use log::trace;
-use reqwest::{header, StatusCode, Url};
+use reqwest::{blocking::Client as HttpClient, header, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use crate::types::*;
 
 /// A synchronous client for the crates.io API.
 pub struct SyncClient {
-    client: reqwest::Client,
+    client: HttpClient,
     base_url: Url,
 }
 
 impl SyncClient {
-    /// Instantiate a new synchronous API client.
+    /// Instantiate a new client.
     ///
-    /// This will fail if the underlying http client could not be created.
+    /// This will panic if the underlying http client could not be created.
+    ///
+    /// The user agent will default to `crates_io_api/{crates_io_api version}`.
     pub fn new() -> Self {
+        let mut headers = header::HeaderMap::new();
+        // Crates.io requires a user agent or it will return 403's on all calls
+        headers.insert(
+            header::USER_AGENT,
+            header::HeaderValue::from_static(crate::DEFAULT_USER_AGENT),
+        );
         Self {
-            client: reqwest::Client::new(),
+            client: HttpClient::builder()
+                .default_headers(headers)
+                .build()
+                .expect("Could not initialize HTTP client"),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         }
     }
 
+    /// Create a new client with a specific user agent
     pub fn with_user_agent(user_agent: &str) -> Self {
         let mut headers = header::HeaderMap::new();
         headers.insert(
@@ -31,7 +43,7 @@ impl SyncClient {
             header::HeaderValue::from_str(user_agent).unwrap(),
         );
         Self {
-            client: reqwest::Client::builder()
+            client: HttpClient::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
@@ -41,7 +53,7 @@ impl SyncClient {
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
         trace!("GET {}", url);
-        let mut res = {
+        let res = {
             let res = self.client.get(url).send()?;
 
             if res.status() == StatusCode::NOT_FOUND {
@@ -89,7 +101,10 @@ impl SyncClient {
     pub fn crate_reverse_dependencies(&self, name: &str) -> Result<ReverseDependencies, Error> {
         let mut page = 1;
         let mut rdeps: ReverseDependenciesAsReceived;
-        let mut tidy_rdeps = ReverseDependencies {dependencies: Vec::new(), meta: Meta {total:0}};
+        let mut tidy_rdeps = ReverseDependencies {
+            dependencies: Vec::new(),
+            meta: Meta { total: 0 },
+        };
 
         loop {
             let url = self.base_url.join(&format!(
@@ -211,14 +226,14 @@ impl SyncClient {
     /// Retrieve a page of crates, optionally constrained by a query.
     ///
     /// If you want to get all results without worrying about paging,
-    /// use [all_crates]().
+    /// use [`all_crates`].
     ///
     /// # Examples
     ///
     /// Retrieve the first page of results for the query "api", with 100 items
     /// per page and sorted alphabetically.
     ///
-    /// ```
+    /// ```rust
     /// # use crates_io_api::{SyncClient, ListOptions, Sort, Error};
     ///
     /// # fn f() -> Result<(), Error> {
@@ -232,7 +247,6 @@ impl SyncClient {
     /// # Ok(())
     /// # }
     /// ```
-    ///
     pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse, Error> {
         let mut url = self.base_url.join("crates")?;
         {
@@ -277,7 +291,25 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_client() {
+    fn list_top_dependencies_sync() -> Result<(), Error> {
+        // Instantiate the client.
+        let client = SyncClient::new();
+        // Retrieve summary data.
+        let summary = client.summary()?;
+        for c in summary.most_downloaded {
+            println!("{}:", c.id);
+            for dep in client.crate_dependencies(&c.id, &c.max_version)? {
+                // Ignore optional dependencies.
+                if !dep.optional {
+                    println!("    * {} - {}", dep.id, dep.version_id);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_client_sync() {
         let client = SyncClient::new();
         let summary = client.summary().unwrap();
         assert!(summary.most_downloaded.len() > 0);

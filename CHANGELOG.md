@@ -1,6 +1,11 @@
 # Changelog
 
-** 0.5.1 - 2019-08-23
+## 0.6.0
+
+* Add HTTP proxy support
+* Make the default user-agent `crates-io-api/{version}`, i.e. `crates-io-api/0.6.0`
+
+## 0.5.1 - 2019-08-23
 
 * Fix faulty condition check in SyncClient::all_crates
 

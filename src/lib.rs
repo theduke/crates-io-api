@@ -11,7 +11,7 @@
 //!
 //! Print the most downloaded crates and their non-optional dependencies:
 //!
-//! ```
+//! ```rust
 //! use crates_io_api::{SyncClient, Error};
 //!
 //! fn list_top_dependencies() -> Result<(), Error> {
@@ -43,6 +43,8 @@ mod types;
 pub use crate::async_client::Client as AsyncClient;
 pub use crate::sync_client::SyncClient;
 pub use crate::types::*;
+
+const DEFAULT_USER_AGENT: &str = concat!("crates-io-api/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Fail, Debug)]
 pub enum Error {
