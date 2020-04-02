@@ -2,7 +2,8 @@
 
 ## 0.6.0
 
-* Add HTTP proxy support
+* Upgrade the async client to Futures 0.3
+* Add HTTP proxy support through the standard `http_proxy` environment variables ( compliments of reqwest 0.10 )
 * Make the default user-agent `crates-io-api/{version}`, i.e. `crates-io-api/0.6.0`
 
 ## 0.5.1 - 2019-08-23
