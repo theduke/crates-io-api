@@ -212,54 +212,57 @@ impl Client {
     /// If false, only the data for the latest version will be fetched, if true,
     /// detailed information for all versions will be available.
     /// Note: Each version requires two extra requests.
-    pub async fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate> {
+    pub fn full_crate(
+        &self,
+        name: &str,
+        all_versions: bool,
+    ) -> impl Future<Output = Result<FullCrate>> {
         let c = self.clone();
-        let krate = self.get_crate(name).await?;
-
-        let versions = if !all_versions {
-            c.full_version(krate.versions[0].clone())
+        let name = String::from(name);
+        async move {
+            let krate = c.get_crate(&name).await?;
+            let versions = if !all_versions {
+                c.full_version(krate.versions[0].clone())
+                    .await
+                    .map(|v| vec![v])
+            } else {
+                try_join_all(
+                    krate
+                        .versions
+                        .clone()
+                        .into_iter()
+                        .map(|v| c.full_version(v)),
+                )
                 .await
-                .map(|v| vec![v])
-        } else {
-            try_join_all(
-                krate
-                    .versions
-                    .clone()
-                    .into_iter()
-                    .map(|v| c.full_version(v)),
+            }?;
+            let dls_fut = c.crate_downloads(&name);
+            let owners_fut = c.crate_owners(&name);
+            let reverse_dependencies_fut = c.crate_reverse_dependencies(&name);
+            try_join!(dls_fut, owners_fut, reverse_dependencies_fut).map(
+                |(dls, owners, reverse_dependencies)| {
+                    let data = krate.crate_data;
+                    FullCrate {
+                        id: data.id,
+                        name: data.name,
+                        description: data.description,
+                        license: krate.versions[0].license.clone(),
+                        documentation: data.documentation,
+                        homepage: data.homepage,
+                        repository: data.repository,
+                        total_downloads: data.downloads,
+                        max_version: data.max_version,
+                        created_at: data.created_at,
+                        updated_at: data.updated_at,
+                        categories: krate.categories,
+                        keywords: krate.keywords,
+                        downloads: dls,
+                        owners,
+                        reverse_dependencies,
+                        versions,
+                    }
+                },
             )
-            .await
-        }?;
-
-        let dls_fut = self.crate_downloads(name);
-        let owners_fut = self.crate_owners(name);
-        let reverse_dependencies_fut = self.crate_reverse_dependencies(name);
-
-        try_join!(dls_fut, owners_fut, reverse_dependencies_fut).map(
-            |(dls, owners, reverse_dependencies)| {
-                let data = krate.crate_data;
-                FullCrate {
-                    id: data.id,
-                    name: data.name,
-                    description: data.description,
-                    license: krate.versions[0].license.clone(),
-                    documentation: data.documentation,
-                    homepage: data.homepage,
-                    repository: data.repository,
-                    total_downloads: data.downloads,
-                    max_version: data.max_version,
-                    created_at: data.created_at,
-                    updated_at: data.updated_at,
-
-                    categories: krate.categories,
-                    keywords: krate.keywords,
-                    downloads: dls,
-                    owners,
-                    reverse_dependencies,
-                    versions,
-                }
-            },
-        )
+        }
     }
 
     /// Retrieve a page of crates, optionally constrained by a query.
@@ -268,7 +271,7 @@ impl Client {
     /// use [`all_crates`].
     ///
     /// ```
-    pub async fn crates(&self, spec: ListOptions) -> Result<CratesResponse> {
+    pub fn crates(&self, spec: ListOptions) -> impl Future<Output = Result<CratesResponse>> {
         let mut url = self.base_url.join("crates").unwrap();
         {
             let mut q = url.query_pairs_mut();
@@ -279,7 +282,8 @@ impl Client {
                 q.append_pair("q", &query);
             }
         }
-        self.get(&url).await
+        let c = self.clone();
+        async move { c.get(&url).await }
     }
     /// Retrieve all crates, optionally constrained by a query.
     ///
@@ -294,17 +298,17 @@ impl Client {
         };
 
         let c = self.clone();
-        self.crates(opts.clone())
+        c.crates(opts.clone())
             .and_then(move |res| {
                 let pages = (res.meta.total as f64 / 100.0).ceil() as u64;
                 let streams_futures = (1..pages)
-                    .map(|page| {
+                    .map(move |page| {
                         let opts = ListOptions {
                             page,
                             ..opts.clone()
                         };
                         c.crates(opts).and_then(|res| {
-                            future::ok(stream::iter(res.crates.into_iter().map(|x| Ok(x))))
+                            future::ok(stream::iter(res.crates.into_iter().map(Ok)))
                         })
                     })
                     .collect::<Vec<_>>();
@@ -334,22 +338,19 @@ impl Client {
 #[cfg(test)]
 mod test {
     use super::*;
-    use futures03::{
-        compat::{Future01CompatExt, Stream01CompatExt},
-        stream::StreamExt,
-    };
+
     #[test]
-    fn list_top_dependencies_async() -> Result<(), Error> {
+    fn list_top_dependencies_async() -> Result<()> {
         // Create tokio runtime
         let mut rt = tokio::runtime::Runtime::new().unwrap();
 
         // Instantiate the client.
         let client = Client::new();
         // Retrieve summary data.
-        let summary = rt.block_on(client.summary().compat())?;
+        let summary = rt.block_on(client.summary())?;
         for c in summary.most_downloaded {
             println!("{}:", c.id);
-            for dep in rt.block_on(client.crate_dependencies(&c.id, &c.max_version).compat())? {
+            for dep in rt.block_on(client.crate_dependencies(&c.id, &c.max_version))? {
                 // Ignore optional dependencies.
                 if !dep.optional {
                     println!("    * {} - {}", dep.id, dep.version_id);
@@ -368,19 +369,19 @@ mod test {
         let client = Client::new();
 
         println!("Getting summary");
-        let summary = rt.block_on(client.summary().compat()).unwrap();
+        let summary = rt.block_on(client.summary()).unwrap();
         assert!(summary.most_downloaded.len() > 0);
 
         println!("Getting three most downloaded crates");
         for item in &summary.most_downloaded[0..3] {
             println!("Geting crate: {}", &item.name);
             let _ = rt
-                .block_on(client.full_crate(&item.name, false).compat())
+                .block_on(client.full_crate(&item.name, false))
                 .unwrap();
         }
 
         println!("Getting three crates from `all_crates`");
-        let crates = rt.block_on(client.all_crates(None).compat().take(3).collect::<Vec<_>>());
+        let crates = rt.block_on(client.all_crates(None).take(3).collect::<Vec<_>>());
         for c in crates {
             let c = c.unwrap();
             println!("Crate: {:#?}", c);
