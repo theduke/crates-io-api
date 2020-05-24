@@ -54,10 +54,12 @@ impl SyncClient {
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
         trace!("GET {}", url);
         let res = {
-            let res = self.client.get(url).send()?;
+            let res = self.client.get(url.clone()).send()?;
 
             if res.status() == StatusCode::NOT_FOUND {
-                return Err(Error::NotFound);
+                return Err(Error::NotFound(super::NotFound {
+                    url: url.to_string(),
+                }));
             }
             res.error_for_status()?
         };

@@ -68,7 +68,9 @@ impl Client {
             .map_err(Error::from)
             .and_then(|res| {
                 if res.status() == StatusCode::NOT_FOUND {
-                    return Err(Error::NotFound);
+                    return Err(Error::NotFound(super::NotFound {
+                        url: url.to_string(),
+                    }));
                 }
                 let res = res.error_for_status()?;
                 Ok(res)

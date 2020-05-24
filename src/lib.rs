@@ -34,44 +34,16 @@
 
 #![recursion_limit = "128"]
 
-use failure::Fail;
-
 mod async_client;
+mod error;
 mod sync_client;
 mod types;
 
-pub use crate::async_client::Client as AsyncClient;
-pub use crate::sync_client::SyncClient;
-pub use crate::types::*;
-
 const DEFAULT_USER_AGENT: &str = concat!("crates-io-api ", env!("CARGO_PKG_VERSION"));
 
-#[derive(Fail, Debug)]
-pub enum Error {
-    #[fail(display = "{}", _0)]
-    Http(reqwest::Error),
-    #[fail(display = "{}", _0)]
-    Url(url::ParseError),
-    #[fail(display = "{}", _0)]
-    InvalidHeader(reqwest::header::InvalidHeaderValue),
-    #[fail(display = "Not found")]
-    NotFound,
-}
-
-impl From<reqwest::Error> for Error {
-    fn from(e: reqwest::Error) -> Self {
-        Error::Http(e)
-    }
-}
-
-impl From<url::ParseError> for Error {
-    fn from(e: url::ParseError) -> Self {
-        Error::Url(e)
-    }
-}
-
-impl From<reqwest::header::InvalidHeaderValue> for Error {
-    fn from(e: reqwest::header::InvalidHeaderValue) -> Self {
-        Error::InvalidHeader(e)
-    }
-}
+pub use crate::{
+    async_client::Client as AsyncClient,
+    error::{Error, NotFound},
+    sync_client::SyncClient,
+    types::*,
+};
