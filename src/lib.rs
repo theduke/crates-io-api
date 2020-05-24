@@ -3,9 +3,8 @@
 //! It aims to provide an easy to use and complete client for retrieving
 //! information about Rust's crate ecosystem.
 //!
-//! **Note:** Right now, only a synchronous client is available.
-//! Once the Async version of hyper stabilizes, an asynchronous client based
-//! on Tokio will be added.
+//! Both `AsyncClient` and a `SyncClient` are available, providing either a 
+//! Futures based or a blocking interface.
 //!
 //! # Examples
 //!
