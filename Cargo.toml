@@ -24,6 +24,3 @@ futures = "0.3.4"
 
 [dev-dependencies]
 tokio = "0.2"
-
-[profile.dev]
-debug = false
