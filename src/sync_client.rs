@@ -16,39 +16,23 @@ pub struct SyncClient {
 impl SyncClient {
     /// Instantiate a new client.
     ///
-    /// This will panic if the underlying http client could not be created.
+    /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
+    /// you must specify a descriptive user agent.
     ///
-    /// The user agent will default to `crates_io_api/{crates_io_api version}`.
-    pub fn new() -> Self {
-        let mut headers = header::HeaderMap::new();
-        // Crates.io requires a user agent or it will return 403's on all calls
-        headers.insert(
-            header::USER_AGENT,
-            header::HeaderValue::from_static(crate::DEFAULT_USER_AGENT),
-        );
-        Self {
-            client: HttpClient::builder()
-                .default_headers(headers)
-                .build()
-                .expect("Could not initialize HTTP client"),
-            base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
-        }
-    }
-
-    /// Create a new client with a specific user agent
-    pub fn with_user_agent(user_agent: &str) -> Self {
+    /// Example: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
+    pub fn new(user_agent: &str) -> Result<Self, reqwest::header::InvalidHeaderValue> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
-            header::HeaderValue::from_str(user_agent).unwrap(),
+            header::HeaderValue::from_str(user_agent)?,
         );
-        Self {
+        Ok(Self {
             client: HttpClient::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
-        }
+        })
     }
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
@@ -180,6 +164,7 @@ impl SyncClient {
     /// information.
     /// If false, only the data for the latest version will be fetched, if true,
     /// detailed information for all versions will be available.
+    ///
     /// Note: Each version requires two extra requests.
     pub fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate, Error> {
         let resp = self.get_crate(name)?;

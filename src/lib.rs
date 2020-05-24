@@ -3,8 +3,11 @@
 //! It aims to provide an easy to use and complete client for retrieving
 //! information about Rust's crate ecosystem.
 //!
-//! Both `AsyncClient` and a `SyncClient` are available, providing either a 
+//! Both `AsyncClient` and a `SyncClient` are available, providing either a
 //! Futures based or a blocking interface.
+//!
+//! Please read the official crates.io [Crawler Policy](https://crates.io/policies#crawlers)
+//! before using this crate.
 //!
 //! # Examples
 //!
@@ -37,8 +40,6 @@ mod async_client;
 mod error;
 mod sync_client;
 mod types;
-
-const DEFAULT_USER_AGENT: &str = concat!("crates-io-api ", env!("CARGO_PKG_VERSION"));
 
 pub use crate::{
     async_client::Client as AsyncClient,
