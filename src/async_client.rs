@@ -13,8 +13,6 @@ use std::iter::FromIterator;
 use super::Error;
 use crate::types::*;
 
-pub type Result<T> = std::result::Result<T, Error>;
-
 /// Asynchronous client for the crates.io API.
 #[derive(Clone)]
 pub struct Client {
@@ -60,7 +58,7 @@ impl Client {
         }
     }
 
-    async fn get<T: DeserializeOwned>(&self, url: &Url) -> Result<T> {
+    async fn get<T: DeserializeOwned>(&self, url: &Url) -> Result<T, Error> {
         trace!("GET {}", url);
 
         self.client
@@ -81,7 +79,7 @@ impl Client {
     }
 
     /// Retrieve a summary containing crates.io wide information.
-    pub async fn summary(&self) -> Result<Summary> {
+    pub async fn summary(&self) -> Result<Summary, Error> {
         let url = self.base_url.join("summary").unwrap();
         self.get(&url).await
     }
@@ -89,13 +87,13 @@ impl Client {
     /// Retrieve information of a crate.
     ///
     /// If you require detailed information, consider using [full_crate]().
-    pub async fn get_crate(&self, name: &str) -> Result<CrateResponse> {
+    pub async fn get_crate(&self, name: &str) -> Result<CrateResponse, Error> {
         let url = self.base_url.join("crates/").unwrap().join(name).unwrap();
         self.get(&url).await
     }
 
     /// Retrieve download stats for a crate.
-    pub async fn crate_downloads(&self, name: &str) -> Result<Downloads> {
+    pub async fn crate_downloads(&self, name: &str) -> Result<Downloads, Error> {
         let url = self
             .base_url
             .join(&format!("crates/{}/downloads", name))
@@ -104,7 +102,7 @@ impl Client {
     }
 
     /// Retrieve the owners of a crate.
-    pub async fn crate_owners(&self, name: &str) -> Result<Vec<User>> {
+    pub async fn crate_owners(&self, name: &str) -> Result<Vec<User>, Error> {
         let url = self
             .base_url
             .join(&format!("crates/{}/owners", name))
@@ -117,13 +115,16 @@ impl Client {
     /// Note: Since the reverse dependency endpoint requires pagination, this
     /// will result in multiple requests if the crate has more than 100 reverse
     /// dependencies.
-    pub async fn crate_reverse_dependencies(&self, name: &str) -> Result<ReverseDependencies> {
+    pub async fn crate_reverse_dependencies(
+        &self,
+        name: &str,
+    ) -> Result<ReverseDependencies, Error> {
         fn fetch_page(
             c: Client,
             name: String,
             mut tidy_rdeps: ReverseDependencies,
             page: u64,
-        ) -> BoxFuture<'static, Result<ReverseDependencies>> {
+        ) -> BoxFuture<'static, Result<ReverseDependencies, Error>> {
             let url = c
                 .base_url
                 .join(&format!(
@@ -159,7 +160,7 @@ impl Client {
     }
 
     /// Retrieve the authors for a crate version.
-    pub async fn crate_authors(&self, name: &str, version: &str) -> Result<Authors> {
+    pub async fn crate_authors(&self, name: &str, version: &str) -> Result<Authors, Error> {
         let url = self
             .base_url
             .join(&format!("crates/{}/{}/authors", name, version))
@@ -171,7 +172,11 @@ impl Client {
     }
 
     /// Retrieve the dependencies of a crate version.
-    pub async fn crate_dependencies(&self, name: &str, version: &str) -> Result<Vec<Dependency>> {
+    pub async fn crate_dependencies(
+        &self,
+        name: &str,
+        version: &str,
+    ) -> Result<Vec<Dependency>, Error> {
         let url = self
             .base_url
             .join(&format!("crates/{}/{}/dependencies", name, version))
@@ -181,7 +186,7 @@ impl Client {
             .map(|res| res.dependencies)
     }
 
-    async fn full_version(&self, version: Version) -> Result<FullVersion> {
+    async fn full_version(&self, version: Version) -> Result<FullVersion, Error> {
         let authors_fut = self.crate_authors(&version.crate_name, &version.num);
         let deps_fut = self.crate_dependencies(&version.crate_name, &version.num);
 
@@ -216,7 +221,7 @@ impl Client {
         &self,
         name: &str,
         all_versions: bool,
-    ) -> impl Future<Output = Result<FullCrate>> {
+    ) -> impl Future<Output = Result<FullCrate, Error>> {
         let c = self.clone();
         let name = String::from(name);
         async move {
@@ -271,7 +276,7 @@ impl Client {
     /// use [`all_crates`].
     ///
     /// ```
-    pub fn crates(&self, spec: ListOptions) -> impl Future<Output = Result<CratesResponse>> {
+    pub fn crates(&self, spec: ListOptions) -> impl Future<Output = Result<CratesResponse, Error>> {
         let mut url = self.base_url.join("crates").unwrap();
         {
             let mut q = url.query_pairs_mut();
@@ -289,7 +294,7 @@ impl Client {
     ///
     /// Note: This method fetches all pages of the result.
     /// This can result in a lot queries (100 results per query).
-    pub fn all_crates(&self, query: Option<String>) -> impl Stream<Item = Result<Crate>> {
+    pub fn all_crates(&self, query: Option<String>) -> impl Stream<Item = Result<Crate, Error>> {
         let opts = ListOptions {
             query,
             sort: Sort::Alphabetical,
@@ -328,7 +333,7 @@ impl Client {
         &self,
         query: Option<String>,
         all_versions: bool,
-    ) -> impl Stream<Item = Result<FullCrate>> {
+    ) -> impl Stream<Item = Result<FullCrate, Error>> {
         let c = self.clone();
         self.all_crates(query)
             .and_then(move |cr| c.full_crate(&cr.name, all_versions))
@@ -340,7 +345,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn list_top_dependencies_async() -> Result<()> {
+    fn list_top_dependencies_async() -> Result<(), Error> {
         // Create tokio runtime
         let mut rt = tokio::runtime::Runtime::new().unwrap();
 
@@ -375,9 +380,7 @@ mod test {
         println!("Getting three most downloaded crates");
         for item in &summary.most_downloaded[0..3] {
             println!("Geting crate: {}", &item.name);
-            let _ = rt
-                .block_on(client.full_crate(&item.name, false))
-                .unwrap();
+            let _ = rt.block_on(client.full_crate(&item.name, false)).unwrap();
         }
 
         println!("Getting three crates from `all_crates`");
