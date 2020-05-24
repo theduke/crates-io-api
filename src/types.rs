@@ -231,8 +231,8 @@ pub struct Dependencies {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReverseDependency {
-  pub crate_version: Version,
-  pub dependency: Dependency,
+    pub crate_version: Version,
+    pub dependency: Dependency,
 }
 
 // This is how reverse dependencies are received
@@ -240,21 +240,19 @@ pub struct ReverseDependency {
 pub(super) struct ReverseDependenciesAsReceived {
     pub dependencies: Vec<Dependency>,
     pub versions: Vec<Version>,
-    pub meta: Meta
+    pub meta: Meta,
 }
 
 // This is how reverse dependencies are presented
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReverseDependencies {
     pub dependencies: Vec<ReverseDependency>,
-    pub meta: Meta
+    pub meta: Meta,
 }
 
 impl ReverseDependencies {
-
     /// Fills the dependencies field from a ReverseDependenciesAsReceived struct.
     pub(crate) fn from_received(&mut self, rdeps: &ReverseDependenciesAsReceived) {
-
         for d in rdeps.dependencies.iter() {
             for v in rdeps.versions.iter() {
                 if v.id == d.version_id {
@@ -262,15 +260,15 @@ impl ReverseDependencies {
                     // For large vectors, it may be faster to remove each matched element
                     // using the drain_filter() method once it's stabilized:
                     // https://doc.rust-lang.org/nightly/std/vec/struct.Vec.html#method.drain_filter
-                    self.dependencies.push(
-                        ReverseDependency {crate_version: v.clone(), dependency: d.clone()}
-                    );
+                    self.dependencies.push(ReverseDependency {
+                        crate_version: v.clone(),
+                        dependency: d.clone(),
+                    });
                 }
             }
         }
     }
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullVersion {
