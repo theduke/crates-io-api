@@ -11,32 +11,61 @@ use crate::types::*;
 pub struct SyncClient {
     client: HttpClient,
     base_url: Url,
+    rate_limit: std::time::Duration,
+    last_request_time: std::cell::RefCell<Option<std::time::Instant>>,
 }
 
 impl SyncClient {
     /// Instantiate a new client.
     ///
     /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
-    /// you must specify a descriptive user agent.
+    /// you must specify both a descriptive user agent and a rate limit interval.
     ///
-    /// Example: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
-    pub fn new(user_agent: &str) -> Result<Self, reqwest::header::InvalidHeaderValue> {
+    /// At most one request will be executed in the specified duration.
+    /// The guidelines suggest 1 per second or less.
+    ///
+    /// Example user agent: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
+    ///
+    /// ```rust
+    /// let client = crates_io_api::AsyncClient::new(
+    ///   "my_bot (help@my_bot.com)",
+    ///   std::time::Duration::from_millis(1000),
+    /// )?;
+    /// ```
+    pub fn new(
+        user_agent: &str,
+        rate_limit: std::time::Duration,
+    ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
             header::HeaderValue::from_str(user_agent)?,
         );
+
         Ok(Self {
             client: HttpClient::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
+            rate_limit,
+            last_request_time: std::cell::RefCell::new(None),
         })
     }
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
         trace!("GET {}", url);
+
+        let mut lock = self.last_request_time.borrow_mut();
+        if let Some(last_request_time) = lock.take() {
+            let now = std::time::Instant::now();
+            if last_request_time.elapsed() < self.rate_limit {
+                std::thread::sleep((last_request_time + self.rate_limit) - now);
+            }
+        }
+
+        let time = std::time::Instant::now();
+
         let res = {
             let res = self.client.get(url.clone()).send()?;
 
@@ -47,6 +76,8 @@ impl SyncClient {
             }
             res.error_for_status()?
         };
+
+        *lock = Some(time);
 
         let data: T = res.json()?;
         Ok(data)
@@ -277,10 +308,18 @@ impl SyncClient {
 mod test {
     use super::*;
 
+    fn test_client() -> SyncClient {
+        SyncClient::new(
+            "crates-io-api-test (github.com/theduke/crates-io-api)",
+            std::time::Duration::from_millis(1000),
+        )
+        .unwrap()
+    }
+
     #[test]
     fn list_top_dependencies_sync() -> Result<(), Error> {
         // Instantiate the client.
-        let client = SyncClient::new();
+        let client = test_client();
         // Retrieve summary data.
         let summary = client.summary()?;
         for c in summary.most_downloaded {
@@ -297,7 +336,7 @@ mod test {
 
     #[test]
     fn test_client_sync() {
-        let client = SyncClient::new();
+        let client = test_client();
         let summary = client.summary().unwrap();
         assert!(summary.most_downloaded.len() > 0);
 

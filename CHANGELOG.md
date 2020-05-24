@@ -2,10 +2,12 @@
 
 ## 0.6.0
 
-* Upgrade the async client to Futures 0.3
+* Upgrade the async client to Futures 0.3 + reqwest 0.10
+  (reqwest 0.10 also respects standard http_proxy env variables)
 * Removed `failure` dependency
-* Add HTTP proxy support through the standard `http_proxy` environment variables ( compliments of reqwest 0.10 )
-* Make the default user-agent `crates-io-api {version}`, i.e. `crates-io-api/0.6.0`
+* Adhere to the crawler policy by requiring a custom user agent
+* Add a *simple* rate limiter that restricts a client to one request in a given
+  duration, and only a single concurrent request.
 
 ## 0.5.1 - 2019-08-23
 

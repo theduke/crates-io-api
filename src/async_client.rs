@@ -17,6 +17,8 @@ use crate::types::*;
 #[derive(Clone)]
 pub struct Client {
     client: HttpClient,
+    rate_limit: std::time::Duration,
+    last_request_time: std::sync::Arc<tokio::sync::Mutex<Option<tokio::time::Instant>>>,
     base_url: Url,
 }
 
@@ -24,20 +26,41 @@ impl Client {
     /// Instantiate a new client.
     ///
     /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
-    /// you must specify a descriptive user agent.
+    /// you must specify both a descriptive user agent and a rate limit interval.
     ///
-    /// Example: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
-    pub fn new(user_agent: &str) -> Result<Self, reqwest::header::InvalidHeaderValue> {
+    /// At most one request will be executed in the specified duration.
+    /// The guidelines suggest 1 per second or less.
+    /// (Only one request is executed concurrenly, even if the given Duration is 0).
+    ///
+    /// Example user agent: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
+    ///
+    /// ```rust
+    /// let client = crates_io_api::AsyncClient::new(
+    ///   "my_bot (help@my_bot.com)",
+    ///   std::time::Duration::from_millis(1000),
+    /// )?;
+    /// ```
+    pub fn new(
+        user_agent: &str,
+        rate_limit: std::time::Duration,
+    ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
             header::HeaderValue::from_str(user_agent)?,
         );
+
+        let client = HttpClient::builder()
+            .default_headers(headers)
+            .build()
+            .unwrap();
+
+        let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
+
         Ok(Self {
-            client: HttpClient::builder()
-                .default_headers(headers)
-                .build()
-                .unwrap(),
+            rate_limit,
+            last_request_time: limiter,
+            client,
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
         })
     }
@@ -45,23 +68,28 @@ impl Client {
     async fn get<T: DeserializeOwned>(&self, url: &Url) -> Result<T, Error> {
         trace!("GET {}", url);
 
-        self.client
-            .get(url.clone())
-            .send()
-            .await
-            .map_err(Error::from)
-            .and_then(|res| {
-                if res.status() == StatusCode::NOT_FOUND {
-                    return Err(Error::NotFound(super::NotFound {
-                        url: url.to_string(),
-                    }));
-                }
-                let res = res.error_for_status()?;
-                Ok(res)
-            })?
-            .json::<T>()
-            .await
-            .map_err(Error::from)
+        let mut lock = self.last_request_time.clone().lock_owned().await;
+
+        if let Some(last_request_time) = lock.take() {
+            if last_request_time.elapsed() < self.rate_limit {
+                let target = last_request_time + self.rate_limit;
+                tokio::time::delay_until(target).await;
+            }
+        }
+
+        let time = tokio::time::Instant::now();
+        let res = self.client.get(url.clone()).send().await?;
+
+        if res.status() == StatusCode::NOT_FOUND {
+            return Err(Error::NotFound(super::NotFound {
+                url: url.to_string(),
+            }));
+        }
+        let data = res.error_for_status()?.json::<T>().await?;
+
+        (*lock) = Some(time);
+
+        Ok(data)
     }
 
     /// Retrieve a summary containing crates.io wide information.
@@ -330,13 +358,21 @@ impl Client {
 mod test {
     use super::*;
 
+    fn test_client() -> Client {
+        Client::new(
+            "crates-io-api-test (github.com/theduke/crates-io-api)",
+            std::time::Duration::from_millis(1000),
+        )
+        .unwrap()
+    }
+
     #[test]
     fn list_top_dependencies_async() -> Result<(), Error> {
         // Create tokio runtime
         let mut rt = tokio::runtime::Runtime::new().unwrap();
 
         // Instantiate the client.
-        let client = Client::new();
+        let client = test_client();
         // Retrieve summary data.
         let summary = rt.block_on(client.summary())?;
         for c in summary.most_downloaded {
@@ -357,7 +393,7 @@ mod test {
         let mut rt = ::tokio::runtime::Runtime::new().unwrap();
 
         println!("Creating client");
-        let client = Client::new();
+        let client = test_client();
 
         println!("Getting summary");
         let summary = rt.block_on(client.summary()).unwrap();
