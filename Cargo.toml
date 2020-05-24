@@ -10,16 +10,21 @@ keywords = [ "crates", "api" ]
 categories = [ "web-programming", "web-programming::http-client" ]
 edition = "2018"
 
-version = "0.5.1"
+version = "0.6.0"
 
 [dependencies]
 chrono = { version = "0.4.6", features = ["serde"] }
-reqwest = { version = "0.9" }
+reqwest = { version = "0.10", features = ["blocking", "json"] }
 serde = "1.0.79"
 serde_derive = "1.0.79"
 serde_json = "1.0.32"
-url = "1.7.1"
+url = "2.1.0"
 log = "0.4.5"
 failure = "0.1.2"
-futures = "0.1.25"
-tokio = "0.1"
+futures = "0.3.4"
+
+[dev-dependencies]
+tokio = "0.2"
+
+[profile.dev]
+debug = false
