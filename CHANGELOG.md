@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0
+## 0.6.0 - 2020-05-25
 
 * Upgrade the async client to Futures 0.3 + reqwest 0.10
   (reqwest 0.10 also respects standard http_proxy env variables)
