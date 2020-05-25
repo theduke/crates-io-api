@@ -80,16 +80,27 @@ impl Client {
         let time = tokio::time::Instant::now();
         let res = self.client.get(url.clone()).send().await?;
 
-        if res.status() == StatusCode::NOT_FOUND {
-            return Err(Error::NotFound(super::NotFound {
-                url: url.to_string(),
-            }));
-        }
-        let data = res.error_for_status()?.json::<T>().await?;
+        let result = match res.status() {
+            StatusCode::NOT_FOUND => {
+                Err(Error::NotFound(super::NotFound {
+                    url: url.to_string(),
+                }))
+            }
+            StatusCode::FORBIDDEN => {
+                let reason = res.text().await.unwrap_or(String::new());
+                Err(Error::PermissionDenied(super::error::PermissionDenied{ reason }))
+            }
+            _ if !res.status().is_success() => {
+                Err(Error::from(res.error_for_status().unwrap_err()))
+            }
+            _ => {
+                res.json::<T>().await.map_err(Error::from)
+            }
+        };
 
         (*lock) = Some(time);
 
-        Ok(data)
+        result
     }
 
     /// Retrieve a summary containing crates.io wide information.

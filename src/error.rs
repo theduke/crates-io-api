@@ -4,6 +4,7 @@ pub enum Error {
     Url(url::ParseError),
     InvalidHeader(reqwest::header::InvalidHeaderValue),
     NotFound(NotFound),
+    PermissionDenied(PermissionDenied),
 }
 
 impl std::fmt::Display for Error {
@@ -13,6 +14,7 @@ impl std::fmt::Display for Error {
             Error::Url(e) => e.fmt(f),
             Error::InvalidHeader(e) => e.fmt(f),
             Error::NotFound(e) => e.fmt(f),
+            Error::PermissionDenied(e) => e.fmt(f),
         }
     }
 }
@@ -24,6 +26,7 @@ impl std::error::Error for Error {
             Error::Url(e) => Some(e),
             Error::InvalidHeader(e) => Some(e),
             Error::NotFound(_) => None,
+            Error::PermissionDenied(_) => None,
         }
     }
 
@@ -66,5 +69,16 @@ pub struct NotFound {
 impl std::fmt::Display for NotFound {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Resouce at url '{}' could not be found", self.url)
+    }
+}
+
+#[derive(Debug)]
+pub struct PermissionDenied {
+    pub(crate) reason: String,
+}
+
+impl std::fmt::Display for PermissionDenied {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Permission denied: {}", self.reason)
     }
 }
