@@ -27,10 +27,13 @@ impl SyncClient {
     /// Example user agent: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
     ///
     /// ```rust
+    /// # fn f() -> Result<(), crates_io_api::Error> {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
     /// )?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new(
         user_agent: &str,
@@ -255,7 +258,7 @@ impl SyncClient {
     /// # use crates_io_api::{SyncClient, ListOptions, Sort, Error};
     ///
     /// # fn f() -> Result<(), Error> {
-    /// let client = SyncClient::new();
+    /// # let client = SyncClient::new( "my-bot-name (my-contact@domain.com)", std::time::Duration::from_millis(1000))?;
     /// client.crates(ListOptions{
     ///   sort: Sort::Alphabetical,
     ///   per_page: 100,

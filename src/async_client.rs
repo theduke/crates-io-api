@@ -35,10 +35,13 @@ impl Client {
     /// Example user agent: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
     ///
     /// ```rust
+    /// # fn f() -> Result<(), crates_io_api::Error> {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
     /// )?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new(
         user_agent: &str,
@@ -81,21 +84,19 @@ impl Client {
         let res = self.client.get(url.clone()).send().await?;
 
         let result = match res.status() {
-            StatusCode::NOT_FOUND => {
-                Err(Error::NotFound(super::NotFound {
-                    url: url.to_string(),
-                }))
-            }
+            StatusCode::NOT_FOUND => Err(Error::NotFound(super::NotFound {
+                url: url.to_string(),
+            })),
             StatusCode::FORBIDDEN => {
                 let reason = res.text().await.unwrap_or(String::new());
-                Err(Error::PermissionDenied(super::error::PermissionDenied{ reason }))
+                Err(Error::PermissionDenied(super::error::PermissionDenied {
+                    reason,
+                }))
             }
             _ if !res.status().is_success() => {
                 Err(Error::from(res.error_for_status().unwrap_err()))
             }
-            _ => {
-                res.json::<T>().await.map_err(Error::from)
-            }
+            _ => res.json::<T>().await.map_err(Error::from),
         };
 
         (*lock) = Some(time);

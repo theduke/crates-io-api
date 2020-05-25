@@ -9,6 +9,10 @@
 //! Please read the official crates.io [Crawler Policy](https://crates.io/policies#crawlers)
 //! before using this crate.
 //!
+//! Due to this policy, you must specify both a user agent and a desired
+//! rate limit delay when constructing a client.
+//! Some more info is available in `SyncClient::new()` and `AsyncClient::new()`.
+//!
 //! # Examples
 //!
 //! Print the most downloaded crates and their non-optional dependencies:
@@ -18,7 +22,10 @@
 //!
 //! fn list_top_dependencies() -> Result<(), Error> {
 //!     // Instantiate the client.
-//!     let client = SyncClient::new();
+//!     let client = SyncClient::new(
+//!          "my-user-agent (my-contact@domain.com)",
+//!          std::time::Duration::from_millis(1000),
+//!     )?;
 //!     // Retrieve summary data.
 //!     let summary = client.summary()?;
 //!     for c in summary.most_downloaded {
