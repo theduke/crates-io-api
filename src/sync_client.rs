@@ -24,7 +24,7 @@ impl SyncClient {
     /// At most one request will be executed in the specified duration.
     /// The guidelines suggest 1 per second or less.
     ///
-    /// Example user agent: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
+    /// Example user agent: `"my_bot (my_bot.com/info)"` or `"my_bot (help@my_bot.com)"`.
     ///
     /// ```rust
     /// # fn f() -> Result<(), crates_io_api::Error> {

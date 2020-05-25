@@ -11,6 +11,8 @@ and provides both a async and synchronous interface.
 When accessing crates.io, please be respectful of the official 
 [Crawler Policy](https://crates.io/policies#crawlers).
 
+To make this easier, rate limiting is provided.
+
 ## How to use
 
 For usage information and examples, check out the

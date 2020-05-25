@@ -3,7 +3,7 @@
 //! It aims to provide an easy to use and complete client for retrieving
 //! information about Rust's crate ecosystem.
 //!
-//! Both `AsyncClient` and a `SyncClient` are available, providing either a
+//! Both a [AsyncClient](struct.AsyncClient.html) and a [SyncClient](struct.SyncClient.html) are available, providing either a
 //! Futures based or a blocking interface.
 //!
 //! Please read the official crates.io [Crawler Policy](https://crates.io/policies#crawlers)
@@ -11,7 +11,7 @@
 //!
 //! Due to this policy, you must specify both a user agent and a desired
 //! rate limit delay when constructing a client.
-//! Some more info is available in `SyncClient::new()` and `AsyncClient::new()`.
+//! See [SyncClient::new](struct.SyncClient.html#method.new) and [AsyncClient::new](struct.AsyncClient.html#method.new) for more information.
 //!
 //! # Examples
 //!

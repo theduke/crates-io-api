@@ -32,7 +32,7 @@ impl Client {
     /// The guidelines suggest 1 per second or less.
     /// (Only one request is executed concurrenly, even if the given Duration is 0).
     ///
-    /// Example user agent: "my_bot (my_bot.com/info)" or "my_bot (help@my_bot.com)"
+    /// Example user agent: `"my_bot (my_bot.com/info)"` or `"my_bot (help@my_bot.com)"`.
     ///
     /// ```rust
     /// # fn f() -> Result<(), crates_io_api::Error> {
@@ -300,8 +300,6 @@ impl Client {
     ///
     /// If you want to get all results without worrying about paging,
     /// use [`all_crates`].
-    ///
-    /// ```
     pub fn crates(&self, spec: ListOptions) -> impl Future<Output = Result<CratesResponse, Error>> {
         let mut url = self.base_url.join("crates").unwrap();
         {
