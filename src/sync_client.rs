@@ -12,7 +12,7 @@ pub struct SyncClient {
     client: HttpClient,
     base_url: Url,
     rate_limit: std::time::Duration,
-    last_request_time: std::cell::RefCell<Option<std::time::Instant>>,
+    last_request_time: std::sync::Mutex<Option<std::time::Instant>>,
 }
 
 impl SyncClient {
@@ -52,14 +52,14 @@ impl SyncClient {
                 .unwrap(),
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
             rate_limit,
-            last_request_time: std::cell::RefCell::new(None),
+            last_request_time: std::sync::Mutex::new(None),
         })
     }
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
         trace!("GET {}", url);
 
-        let mut lock = self.last_request_time.borrow_mut();
+        let mut lock = self.last_request_time.lock().unwrap();
         if let Some(last_request_time) = lock.take() {
             let now = std::time::Instant::now();
             if last_request_time.elapsed() < self.rate_limit {
@@ -346,5 +346,12 @@ mod test {
         for item in &summary.most_downloaded[0..3] {
             let _ = client.full_crate(&item.name, false).unwrap();
         }
+    }
+
+    /// Ensure that the sync client remains send.
+    #[test]
+    fn sync_client_ensure_send() {
+        let client = test_client();
+        let _: &dyn Send = &client;
     }
 }
