@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 - 2020-07-19
+
+* Make `SyncClient` `Send + Sync` [#22](https://github.com/theduke/crates_io_api/pull/22)
+
 ## 0.6.0 - 2020-05-25
 
 * Upgrade the async client to Futures 0.3 + reqwest 0.10
