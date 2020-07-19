@@ -8,10 +8,8 @@ detailed information about Rust's crate ecosystem.
 The crate uses the [reqwest](https://github.com/seanmonstar/reqwest) HTTP client
 and provides both a async and synchronous interface.
 
-When accessing crates.io, please be respectful of the official 
-[Crawler Policy](https://crates.io/policies#crawlers).
-
-To make this easier, rate limiting is provided.
+Please consult the official [Crawler Policy](https://crates.io/policies#crawlers) before using this library. 
+A rate limiter is included.
 
 ## How to use
 
