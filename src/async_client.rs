@@ -75,8 +75,7 @@ impl Client {
 
         if let Some(last_request_time) = lock.take() {
             if last_request_time.elapsed() < self.rate_limit {
-                let target = last_request_time + self.rate_limit;
-                tokio::time::delay_until(target).await;
+                tokio::time::sleep(self.rate_limit - last_request_time.elapsed()).await;
             }
         }
 
