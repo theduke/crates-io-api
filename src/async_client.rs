@@ -87,7 +87,7 @@ impl Client {
                 url: url.to_string(),
             })),
             StatusCode::FORBIDDEN => {
-                let reason = res.text().await.unwrap_or(String::new());
+                let reason = res.text().await.unwrap_or_default();
                 Err(Error::PermissionDenied(super::error::PermissionDenied {
                     reason,
                 }))
@@ -378,7 +378,7 @@ mod test {
     #[test]
     fn list_top_dependencies_async() -> Result<(), Error> {
         // Create tokio runtime
-        let mut rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Runtime::new().unwrap();
 
         // Instantiate the client.
         let client = test_client();
@@ -399,7 +399,7 @@ mod test {
     #[test]
     fn test_client_async() {
         println!("Async Client test: Starting runtime");
-        let mut rt = ::tokio::runtime::Runtime::new().unwrap();
+        let rt = ::tokio::runtime::Runtime::new().unwrap();
 
         println!("Creating client");
         let client = test_client();
