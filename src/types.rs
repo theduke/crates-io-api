@@ -23,14 +23,13 @@ pub enum Sort {
 
 impl Sort {
     pub(crate) fn to_str(&self) -> &str {
-        use self::Sort::*;
-        match *self {
-            Alphabetical => "alpha",
-            Relevance => "",
-            Downloads => "downloads",
-            RecentDownloads => "recent-downloads",
-            RecentUpdates => "recent-updates",
-            NewlyAdded => "new",
+        match self {
+            Self::Alphabetical => "alpha",
+            Self::Relevance => "",
+            Self::Downloads => "downloads",
+            Self::RecentDownloads => "recent-downloads",
+            Self::RecentUpdates => "recent-updates",
+            Self::NewlyAdded => "new",
         }
     }
 }
