@@ -13,6 +13,12 @@ pub enum Sort {
     Relevance,
     /// Sort by downloads.
     Downloads,
+    /// Sort by recent downloads
+    RecentDownloads,
+    /// Sort by recent updates
+    RecentUpdates,
+    /// Sort by new
+    NewlyAdded,
 }
 
 impl Sort {
@@ -22,6 +28,9 @@ impl Sort {
             Alphabetical => "alpha",
             Relevance => "",
             Downloads => "downloads",
+            RecentDownloads => "recent-downloads",
+            RecentUpdates => "recent-updates",
+            NewlyAdded => "new",
         }
     }
 }
