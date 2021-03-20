@@ -313,6 +313,21 @@ impl Client {
         let c = self.clone();
         async move { c.get(&url).await }
     }
+
+    fn crates_category(&self, spec: ListOptions) -> impl Future<Output = Result<CratesResponse, Error>> {
+        let mut url = self.base_url.join("crates").unwrap();
+        {
+            let mut q = url.query_pairs_mut();
+            if let Some(query) = spec.query {
+                q.append_pair("category", &query);
+            }
+            q.append_pair("page", &spec.page.to_string());
+            q.append_pair("per_page", &spec.per_page.to_string());
+            q.append_pair("sort", spec.sort.to_str());
+        }
+        let c = self.clone();
+        async move { c.get(&url).await }
+    }
     /// Retrieve all crates, optionally constrained by a query.
     ///
     /// Note: This method fetches all pages of the result.
@@ -336,6 +351,39 @@ impl Client {
                             ..opts.clone()
                         };
                         c.crates(opts).and_then(|res| {
+                            future::ok(stream::iter(res.crates.into_iter().map(Ok)))
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let stream = stream::FuturesOrdered::from_iter(streams_futures).try_flatten();
+                future::ok(stream)
+            })
+            .try_flatten_stream()
+    }
+
+    /// Retrieve all crates, with category.
+    ///
+    /// Note: This method fetches all pages of the result.
+    /// This can result in a lot queries (100 results per query).
+    pub fn from_category(&self, category: String) -> impl Stream<Item = Result<Crate, Error>> {
+        let opts = ListOptions {
+            query: Some(category),
+            sort: Sort::Alphabetical,
+            per_page: 100,
+            page: 1,
+        };
+
+        let c = self.clone();
+        c.crates_category(opts.clone())
+            .and_then(move |res| {
+                let pages = (res.meta.total as f64 / 100.0).ceil() as u64;
+                let streams_futures = (1..pages)
+                    .map(move |page| {
+                        let opts = ListOptions {
+                            page,
+                            ..opts.clone()
+                        };
+                        c.crates_category(opts).and_then(|res| {
                             future::ok(stream::iter(res.crates.into_iter().map(Ok)))
                         })
                     })

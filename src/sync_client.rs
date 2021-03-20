@@ -282,6 +282,20 @@ impl SyncClient {
         self.get(url)
     }
 
+    fn crates_category(&self, spec: ListOptions) -> Result<CratesResponse, Error> {
+        let mut url = self.base_url.join("crates")?;
+        {
+            let mut q = url.query_pairs_mut();
+            if let Some(query) = spec.query {
+                q.append_pair("category", &query);
+            }
+            q.append_pair("page", &spec.page.to_string());
+            q.append_pair("per_page", &spec.per_page.to_string());
+            q.append_pair("sort", spec.sort.to_str());
+        }
+        self.get(url)
+    }
+
     /// Retrieve all crates, optionally constrained by a query.
     ///
     /// Note: This method fetches all pages of the result.
@@ -293,6 +307,30 @@ impl SyncClient {
             let res = self.crates(ListOptions {
                 query: query.clone(),
                 sort: Sort::Alphabetical,
+                per_page: 100,
+                page,
+            })?;
+            if !res.crates.is_empty() {
+                crates.extend(res.crates);
+                page += 1;
+            } else {
+                break;
+            }
+        }
+        Ok(crates)
+    }
+
+    /// Retrieve all crates, with category.
+    ///
+    /// Note: This method fetches all pages of the result.
+    /// This can result in a lot queries (100 results per query).
+    pub fn from_category(&self, category: String) -> Result<Vec<Crate>, Error> {
+        let mut page = 1;
+        let mut crates = Vec::new();
+        loop {
+            let res = self.crates_category(ListOptions {
+                query: Some(category.clone()),
+                sort: Sort::RecentDownloads,
                 per_page: 100,
                 page,
             })?;
