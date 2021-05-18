@@ -99,6 +99,11 @@ pub struct CratesResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionLinks {
+    #[deprecated(
+        since = "0.7.1",
+        note = "This field was removed from the API and will always be empty. Will be removed in 0.8.0."
+    )]
+    #[serde(default)]
     pub authors: String,
     pub dependencies: String,
     pub version_downloads: String,
