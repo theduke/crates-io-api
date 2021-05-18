@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 - 2021-05-18
+
+* Deprecate the `VersionLinks.authors` field that was removed from the API
+  Now will always be empty.
+  Field will be removed in 0.8.
+
 ## 0.6.1 - 2020-07-19
 
 * Make `SyncClient` `Send + Sync` [#22](https://github.com/theduke/crates_io_api/pull/22)
