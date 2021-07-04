@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2 - 2021-07-05
+
+* Disable default features of chrono to have fewer dependencies.
+
 ## 0.7.1 - 2021-05-18
 
 * Deprecate the `VersionLinks.authors` field that was removed from the API
