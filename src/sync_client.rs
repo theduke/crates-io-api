@@ -274,7 +274,11 @@ impl SyncClient {
             let mut q = url.query_pairs_mut();
             q.append_pair("page", &spec.page.to_string());
             q.append_pair("per_page", &spec.per_page.to_string());
-            q.append_pair("sort", spec.sort.to_str());
+            
+            if spec.sort != Sort::Relevance {
+                q.append_pair("sort", spec.sort.to_str());
+            }
+            
             if let Some(query) = spec.query {
                 q.append_pair("q", &query);
             }

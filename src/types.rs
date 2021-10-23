@@ -5,7 +5,7 @@ use serde_derive::*;
 use std::collections::HashMap;
 
 /// Used to specify the sort behaviour of the `Client::crates()` method.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Sort {
     /// Sort alphabetically.
     Alphabetical,
