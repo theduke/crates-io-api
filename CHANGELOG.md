@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3 - 2021-10-26
+
+* Fix sort by relevance (https://github.com/theduke/crates_io_api/pull/35)
+* Provide rustls option via feature flag (https://github.com/theduke/crates_io_api/pull/34)
+
 ## 0.7.2 - 2021-07-05
 
 * Disable default features of chrono to have fewer dependencies.
