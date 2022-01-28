@@ -366,13 +366,13 @@ impl Client {
             .and_then(move |cr| c.full_crate(&cr.name, all_versions))
     }
 
-     /// Retrieves user with a username
-     pub async fn users(&self, username: &str) -> Result<User, Error> {
+    /// Retrieves user with a username
+    pub async fn users(&self, username: &str) -> Result<User, Error> {
         let url = self
             .base_url
             .join(&format!("users/{}", username))
             .unwrap();
-        self.get::<User>(&url).await
+        self.get::<UserResponse>(&url).await.and_then(|response| Ok(response.user))
     }
 }
 

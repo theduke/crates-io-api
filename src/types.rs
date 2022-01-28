@@ -325,3 +325,8 @@ pub struct FullCrate {
 
     pub versions: Vec<FullVersion>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UserResponse {
+    pub user: User
+}
