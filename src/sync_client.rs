@@ -314,7 +314,7 @@ impl SyncClient {
     /// Retrieves user with a username
     pub fn users(&self, username: &str) -> Result<User, Error> {
         let url = self.base_url.join(&format!("users/{}", username))?;
-        self.get(url)
+        self.get::<UserResponse>(url).map(|response| response.user)
     } 
 }
 
