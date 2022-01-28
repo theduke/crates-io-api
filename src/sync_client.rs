@@ -299,6 +299,7 @@ impl SyncClient {
                 sort: Sort::Alphabetical,
                 per_page: 100,
                 page,
+                user_id: None
             })?;
             if !res.crates.is_empty() {
                 crates.extend(res.crates);
@@ -309,6 +310,12 @@ impl SyncClient {
         }
         Ok(crates)
     }
+
+    /// Retrieves user with a username
+    pub fn users(&self, username: &str) -> Result<User, Error> {
+        let url = self.base_url.join(&format!("users/{}", username))?;
+        self.get(url)
+    } 
 }
 
 #[cfg(test)]

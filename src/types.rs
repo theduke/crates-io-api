@@ -42,6 +42,7 @@ pub struct ListOptions {
     pub sort: Sort,
     pub per_page: u64,
     pub page: u64,
+    pub user_id: Option<String>,
     pub query: Option<String>,
 }
 
