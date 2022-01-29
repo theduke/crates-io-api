@@ -331,33 +331,32 @@ mod test {
 
     fn build_test_client() -> SyncClient {
         SyncClient::new(
-            "crates-io-api-test (github.com/theduke/crates-io-api)",
+            "crates-io-api-ci (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
         )
         .unwrap()
     }
 
     #[test]
-    fn list_top_dependencies_sync() -> Result<(), Error> {
-        // Instantiate the client.
+    fn test_summary() -> Result<(), Error> {
         let client = build_test_client();
-        // Retrieve summary data.
         let summary = client.summary()?;
-        for c in summary.most_downloaded {
-            let _deps = client.crate_dependencies(&c.id, &c.max_version)?;
-        }
+        assert!(summary.most_downloaded.len() > 0);
+        assert!(summary.just_updated.len() > 0);
+        assert!(summary.new_crates.len() > 0);
+        assert!(summary.most_recently_downloaded.len() > 0);
+        assert!(summary.num_crates > 0);
+        assert!(summary.num_downloads > 0);
+        assert!(summary.popular_categories.len() > 0);
+        assert!(summary.popular_keywords.len() > 0);
         Ok(())
     }
 
     #[test]
-    fn test_client_sync() {
+    fn test_full_crate() -> Result<(), Error> {
         let client = build_test_client();
-        let summary = client.summary().unwrap();
-        assert!(summary.most_downloaded.len() > 0);
-
-        for item in &summary.most_downloaded[0..3] {
-            let _ = client.full_crate(&item.name, false).unwrap();
-        }
+        client.full_crate("crates_io_api", false)?;
+        Ok(())
     }
 
     /// Ensure that the sync Client remains send.
