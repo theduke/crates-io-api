@@ -111,7 +111,7 @@ impl Client {
     /// Example user agent: `"my_bot (my_bot.com/info)"` or `"my_bot (help@my_bot.com)"`.
     ///
     /// ```rust
-    /// # fn f() -> Result<(), crates_io_api::Error> {
+    /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),

@@ -25,7 +25,7 @@
 //!     let client = SyncClient::new(
 //!          "my-user-agent (my-contact@domain.com)",
 //!          std::time::Duration::from_millis(1000),
-//!     )?;
+//!     ).unwrap();
 //!     // Retrieve summary data.
 //!     let summary = client.summary()?;
 //!     for c in summary.most_downloaded {
