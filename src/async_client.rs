@@ -373,50 +373,35 @@ mod test {
 
     fn build_test_client() -> Client {
         Client::new(
-            "crates-io-api-test (github.com/theduke/crates-io-api)",
+            "crates-io-api-continuous-integration (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
         )
         .unwrap()
     }
 
     #[tokio::test]
-    async fn list_top_dependencies_async() -> Result<(), Error> {
-        // Instantiate the client.
+    async fn test_summary() -> Result<(), Error> {
         let client = build_test_client();
-        // Retrieve summary data.
         let summary = client.summary().await?;
-        for c in summary.most_downloaded.iter().take(5) {
-            let _deps = client.crate_dependencies(&c.id, &c.max_version).await?;
-        }
-
+        assert!(summary.most_downloaded.len() > 0);
+        assert!(summary.just_updated.len() > 0);
+        assert!(summary.new_crates.len() > 0);
+        assert!(summary.most_recently_downloaded.len() > 0);
+        assert!(summary.num_crates > 0);
+        assert!(summary.num_downloads > 0);
+        assert!(summary.popular_categories.len() > 0);
+        assert!(summary.popular_keywords.len() > 0);
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_client_async() -> Result<(), Error> {
-        println!("Async Client test: Starting runtime");
-
+    async fn test_full_crate() -> Result<(), Error> {
         let client = build_test_client();
+        client.full_crate("crates_io_api", false).await?;
 
-        let summary = client.summary().await.unwrap();
-        assert!(summary.most_downloaded.len() > 0);
-
-        for item in &summary.most_downloaded[0..3] {
-            let _ = client.full_crate(&item.name, false).await.unwrap();
-        }
-
-        let items = client
-            .all_crates(None)
-            .take(3)
-            .try_fold(Vec::new(), |mut acc, item| async move {
-                acc.push(item);
-                Ok(acc)
-            })
-            .await
-            .unwrap();
-        assert!(items.len() == 3);
         Ok(())
     }
+
 
     #[tokio::test]
     async fn test_user_get_async() -> Result<(), Error> {
