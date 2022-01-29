@@ -24,7 +24,7 @@ futures = "0.3.4"
 tokio = { version = "1.0.1", default-features = false, features = ["sync", "time"] }
 
 [dev-dependencies]
-tokio = "1.0.1"
+tokio = { version = "1.0.1", features = ["macros"]}
 
 [features]
 default = ["reqwest/default-tls"]
