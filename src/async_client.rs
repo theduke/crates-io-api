@@ -385,51 +385,43 @@ mod test {
         .unwrap()
     }
 
-    #[test]
-    fn list_top_dependencies_async() -> Result<(), Error> {
-        // Create tokio runtime
-        let rt = tokio::runtime::Runtime::new().unwrap();
+    #[tokio::test]
+    async fn list_top_dependencies_async() -> Result<(), Error> {
+        // Instantiate the client.
+        let client = build_test_client();
+        // Retrieve summary data.
+        let summary = client.summary().await?;
+        for c in summary.most_downloaded.iter().take(5) {
+            let _deps = client.crate_dependencies(&c.id, &c.max_version).await?;
+        }
 
-        rt.block_on(async {
-            // Instantiate the client.
-            let client = build_test_client();
-            // Retrieve summary data.
-            let summary = client.summary().await?;
-            for c in summary.most_downloaded.iter().take(5) {
-                let _deps = client.crate_dependencies(&c.id, &c.max_version).await?;
-            }
-
-            Ok(())
-        })
+        Ok(())
     }
 
-    #[test]
-    fn test_client_async() -> Result<(), Error> {
+    #[tokio::test]
+    async fn test_client_async() -> Result<(), Error> {
         println!("Async Client test: Starting runtime");
-        let rt = ::tokio::runtime::Runtime::new().unwrap();
 
-        rt.block_on(async {
-            let client = build_test_client();
+        let client = build_test_client();
 
-            let summary = client.summary().await.unwrap();
-            assert!(summary.most_downloaded.len() > 0);
+        let summary = client.summary().await.unwrap();
+        assert!(summary.most_downloaded.len() > 0);
 
-            for item in &summary.most_downloaded[0..3] {
-                let _ = client.full_crate(&item.name, false).await.unwrap();
-            }
+        for item in &summary.most_downloaded[0..3] {
+            let _ = client.full_crate(&item.name, false).await.unwrap();
+        }
 
-            let items = client
-                .all_crates(None)
-                .take(3)
-                .try_fold(Vec::new(), |mut acc, item| async move {
-                    acc.push(item);
-                    Ok(acc)
-                })
-                .await
-                .unwrap();
-            assert!(items.len() == 3);
-            Ok(())
-        })
+        let items = client
+            .all_crates(None)
+            .take(3)
+            .try_fold(Vec::new(), |mut acc, item| async move {
+                acc.push(item);
+                Ok(acc)
+            })
+            .await
+            .unwrap();
+        assert!(items.len() == 3);
+        Ok(())
     }
 
     #[tokio::test]
