@@ -3,4 +3,3 @@ target/
 Cargo.lock
 .idea
 flake.lock
-flake.lock
