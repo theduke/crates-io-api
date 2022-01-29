@@ -1,6 +1,7 @@
-//! Custom [`Error`] type.
+//! Error types.
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     Http(reqwest::Error),
     Url(url::ParseError),
