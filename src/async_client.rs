@@ -307,7 +307,7 @@ impl Client {
             q.append_pair("per_page", &spec.per_page.to_string());
             q.append_pair("sort", spec.sort.to_str());
             if let Some(user_id) = spec.user_id {
-                q.append_pair("user_id", &user_id);
+                q.append_pair("user_id", &user_id.to_string());
             }
             if let Some(query) = spec.query {
                 q.append_pair("q", &query);
@@ -326,7 +326,7 @@ impl Client {
             sort: Sort::Alphabetical,
             per_page: 100,
             page: 1,
-            user_id: None
+            user_id: None,
         };
 
         let c = self.clone();
@@ -366,13 +366,10 @@ impl Client {
             .and_then(move |cr| c.full_crate(&cr.name, all_versions))
     }
 
-    /// Retrieves user with a username
-    pub async fn users(&self, username: &str) -> Result<User, Error> {
-        let url = self
-            .base_url
-            .join(&format!("users/{}", username))
-            .unwrap();
-        self.get::<UserResponse>(&url).await.and_then(|response| Ok(response.user))
+    /// Retrieves a user by username.
+    pub async fn user(&self, username: &str) -> Result<User, Error> {
+        let url = self.base_url.join(&format!("users/{}", username)).unwrap();
+        self.get::<UserResponse>(&url).await.map(|res| res.user)
     }
 }
 
