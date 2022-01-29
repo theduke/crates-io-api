@@ -431,4 +431,36 @@ mod test {
             Ok(())
         })
     }
+
+    #[tokio::test]
+    async fn test_user_get_async() -> Result<(), Error> {
+        let client = build_test_client();
+        let user = client.user("theduke").await?;
+        assert_eq!(user.login, "theduke");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_crates_filter_by_user_async() -> Result<(), Error> {
+        let client = build_test_client();
+
+        let user = client.user("theduke").await?;
+
+        let res = client
+            .crates(ListOptions {
+                user_id: Some(user.id),
+                per_page: 5,
+                ..Default::default()
+            })
+            .await?;
+
+        assert!(!res.crates.is_empty());
+        // Ensure all found have the searched user as owner.
+        for krate in res.crates {
+            let owners = client.crate_owners(&krate.name).await?;
+            assert!(owners.iter().any(|o| o.id == user.id));
+        }
+
+        Ok(())
+    }
 }
