@@ -8,10 +8,19 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --release
+
+    - name: Formatting
+      run: cargo fmt --check
+
+    - name: Lint
+      run: cargo clippy -D warnings --verbose
+
+    - name: Test
+      run: cargo test
