@@ -221,14 +221,12 @@ pub struct AuthorsMeta {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AuthorsResponse {
+pub(crate) struct AuthorsResponse {
     pub meta: AuthorsMeta,
-    pub users: Vec<User>,
 }
 
 pub struct Authors {
     pub names: Vec<String>,
-    pub users: Vec<User>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -311,7 +309,6 @@ pub struct FullVersion {
     pub links: VersionLinks,
 
     pub author_names: Vec<String>,
-    pub authors: Vec<User>,
     pub dependencies: Vec<Dependency>,
 }
 

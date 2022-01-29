@@ -279,7 +279,6 @@ impl Client {
             .unwrap();
         self.get::<AuthorsResponse>(&url).await.map(|res| Authors {
             names: res.meta.names,
-            users: res.users,
         })
     }
 
@@ -316,7 +315,6 @@ impl Client {
             readme_path: version.readme_path,
 
             author_names: authors.names,
-            authors: authors.users,
             dependencies: deps,
         })
     }
