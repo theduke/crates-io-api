@@ -1,4 +1,4 @@
-# crates_io_api
+# crates-io-api
 
 A Rust client for the [crates.io](https://crates.io) API.
 
