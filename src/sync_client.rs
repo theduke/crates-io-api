@@ -123,14 +123,25 @@ impl SyncClient {
         Ok(resp.users)
     }
 
-    fn crate_reverse_dependencies_page(
+    /// Get a single page of reverse dependencies.
+    ///
+    /// Note: if the page is 0, it is coerced to 1.
+    pub fn crate_reverse_dependencies_page(
         &self,
         crate_name: &str,
         page: u64,
-    ) -> Result<ReverseDependenciesAsReceived, Error> {
+    ) -> Result<ReverseDependencies, Error> {
         let url =
             super::async_client::build_crate_reverse_deps_url(&self.base_url, crate_name, page)?;
-        self.get(url)
+        let page = self.get::<ReverseDependenciesAsReceived>(url)?;
+
+        let mut deps = ReverseDependencies {
+            dependencies: Vec::new(),
+            meta: Meta { total: 0 },
+        };
+        deps.meta.total = page.meta.total;
+        deps.extend(page);
+        Ok(deps)
     }
 
     /// Load all reverse dependencies of a crate.
@@ -153,7 +164,8 @@ impl SyncClient {
                 break;
             }
 
-            deps.extend(page);
+            deps.dependencies.extend(page.dependencies);
+            deps.meta.total = page.meta.total;
         }
         Ok(deps)
     }
@@ -291,32 +303,6 @@ impl SyncClient {
         query.build(url.query_pairs_mut());
 
         self.get(url)
-    }
-
-    /// Retrieve all crates, optionally constrained by a query.
-    ///
-    /// Note: This method fetches all pages of the result.
-    /// This can result in a lot queries (100 results per query).
-    pub fn all_crates(&self, query: Option<String>) -> Result<Vec<Crate>, Error> {
-        let mut page = 1;
-        let mut crates = Vec::new();
-        loop {
-            let res = self.crates(CratesQuery {
-                search: query.clone(),
-                sort: Sort::Alphabetical,
-                per_page: 100,
-                page,
-                user_id: None,
-                category: None,
-            })?;
-            if !res.crates.is_empty() {
-                crates.extend(res.crates);
-                page += 1;
-            } else {
-                break;
-            }
-        }
-        Ok(crates)
     }
 
     /// Retrieves a user by username.
