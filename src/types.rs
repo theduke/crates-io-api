@@ -5,6 +5,37 @@ use serde_derive::*;
 use std::collections::HashMap;
 
 /// Used to specify the sort behaviour of the `Client::crates()` method.
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct ApiErrors {
+    pub errors: Vec<ApiError>,
+}
+
+/// Used to specify the sort behaviour of the `Client::crates()` method.
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct ApiError {
+    pub detail: Option<String>,
+}
+
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.detail
+                .as_deref()
+                .unwrap_or("Unknown API Error")
+        )
+    }
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(untagged)]
+pub(crate) enum ApiResponse<T> {
+    Err(ApiErrors),
+    Ok(T),
+}
+
+/// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Sort {
     /// Sort alphabetically.

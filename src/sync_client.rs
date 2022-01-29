@@ -69,21 +69,29 @@ impl SyncClient {
 
         let time = std::time::Instant::now();
 
-        let res = {
-            let res = self.client.get(url.clone()).send()?;
-
-            if res.status() == StatusCode::NOT_FOUND {
-                return Err(Error::NotFound(super::NotFound {
-                    url: url.to_string(),
-                }));
+        let res = self.client.get(url.clone()).send()?;
+        let result = match res.status() {
+            StatusCode::NOT_FOUND => Err(Error::NotFound(super::NotFound {
+                url: url.to_string(),
+            })),
+            StatusCode::FORBIDDEN => {
+                let reason = res.text().unwrap_or_default();
+                Err(Error::PermissionDenied(super::error::PermissionDenied {
+                    reason,
+                }))
             }
-            res.error_for_status()?
+            _ if !res.status().is_success() => {
+                Err(Error::from(res.error_for_status().unwrap_err()))
+            }
+            _ => res.json::<ApiResponse<T>>().map_err(Error::from),
         };
 
         *lock = Some(time);
 
-        let data: T = res.json()?;
-        Ok(data)
+        match result? {
+            ApiResponse::Ok(t) => Ok(t),
+            ApiResponse::Err(err) => Err(Error::Api(err)),
+        }
     }
 
     /// Retrieve a summary containing crates.io wide information.

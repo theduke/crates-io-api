@@ -1,3 +1,5 @@
+//! Custom [`Error`] type.
+
 #[derive(Debug)]
 pub enum Error {
     Http(reqwest::Error),
@@ -5,6 +7,7 @@ pub enum Error {
     InvalidHeader(reqwest::header::InvalidHeaderValue),
     NotFound(NotFound),
     PermissionDenied(PermissionDenied),
+    Api(crate::types::ApiErrors),
 }
 
 impl std::fmt::Display for Error {
@@ -15,6 +18,19 @@ impl std::fmt::Display for Error {
             Error::InvalidHeader(e) => e.fmt(f),
             Error::NotFound(e) => e.fmt(f),
             Error::PermissionDenied(e) => e.fmt(f),
+            Error::Api(err) => {
+                let inner = if err.errors.is_empty() {
+                    "Unknown API error".to_string()
+                } else {
+                    err.errors
+                        .iter()
+                        .map(|err| err.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                };
+
+                write!(f, "API Error ({})", inner)
+            }
         }
     }
 }
@@ -27,6 +43,7 @@ impl std::error::Error for Error {
             Error::InvalidHeader(e) => Some(e),
             Error::NotFound(_) => None,
             Error::PermissionDenied(_) => None,
+            Error::Api(_) => None,
         }
     }
 

@@ -167,12 +167,15 @@ impl Client {
             _ if !res.status().is_success() => {
                 Err(Error::from(res.error_for_status().unwrap_err()))
             }
-            _ => res.json::<T>().await.map_err(Error::from),
+            _ => res.json::<ApiResponse<T>>().await.map_err(Error::from),
         };
 
         (*lock) = Some(time);
 
-        result
+        match result? {
+            ApiResponse::Ok(t) => Ok(t),
+            ApiResponse::Err(err) => Err(Error::Api(err)),
+        }
     }
 
     /// Retrieve a summary containing crates.io wide information.
