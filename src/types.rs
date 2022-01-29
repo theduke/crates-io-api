@@ -278,9 +278,9 @@ pub struct ReverseDependencies {
 
 impl ReverseDependencies {
     /// Fills the dependencies field from a ReverseDependenciesAsReceived struct.
-    pub(crate) fn add_reverse_deps(&mut self, rdeps: &ReverseDependenciesAsReceived) {
-        for d in rdeps.dependencies.iter() {
-            for v in rdeps.versions.iter() {
+    pub(crate) fn extend(&mut self, rdeps: ReverseDependenciesAsReceived) {
+        for d in rdeps.dependencies {
+            for v in &rdeps.versions {
                 if v.id == d.version_id {
                     // Right now it iterates over the full vector for each vector element.
                     // For large vectors, it may be faster to remove each matched element

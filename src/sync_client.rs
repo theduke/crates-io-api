@@ -113,37 +113,41 @@ impl SyncClient {
         Ok(resp.users)
     }
 
+    fn crate_reverse_dependencies_page(
+        &self,
+        crate_name: &str,
+        page: u64,
+    ) -> Result<ReverseDependenciesAsReceived, Error> {
+        let url = self.base_url.join(&format!(
+            "crates/{}/reverse_dependencies?per_page=100&page={}",
+            crate_name, page
+        ))?;
+        self.get(url)
+    }
+
     /// Load all reverse dependencies of a crate.
     ///
     /// Note: Since the reverse dependency endpoint requires pagination, this
     /// will result in multiple requests if the crate has more than 100 reverse
     /// dependencies.
-    pub fn crate_reverse_dependencies(&self, name: &str) -> Result<ReverseDependencies, Error> {
-        let mut page = 1;
-        let mut rdeps: ReverseDependenciesAsReceived;
-        let mut tidy_rdeps = ReverseDependencies {
+    pub fn crate_reverse_dependencies(
+        &self,
+        crate_name: &str,
+    ) -> Result<ReverseDependencies, Error> {
+        let mut deps = ReverseDependencies {
             dependencies: Vec::new(),
             meta: Meta { total: 0 },
         };
 
-        loop {
-            let url = self.base_url.join(&format!(
-                "crates/{}/reverse_dependencies?per_page=100&page={}",
-                name, page
-            ))?;
-
-            rdeps = self.get(url)?;
-
-            tidy_rdeps.add_reverse_deps(&rdeps);
-
-            if !rdeps.dependencies.is_empty() {
-                tidy_rdeps.meta = rdeps.meta;
-                page += 1;
-            } else {
+        for page_number in 1.. {
+            let page = self.crate_reverse_dependencies_page(crate_name, page_number)?;
+            if page.dependencies.is_empty() {
                 break;
             }
+
+            deps.extend(page);
         }
-        Ok(tidy_rdeps)
+        Ok(deps)
     }
 
     /// Retrieve the authors for a crate version.

@@ -1,6 +1,6 @@
 use futures::prelude::*;
 use futures::{
-    future::{try_join_all, BoxFuture, FutureExt, TryFutureExt},
+    future::{try_join_all, TryFutureExt},
     stream::{self, TryStreamExt},
     try_join,
 };
@@ -135,6 +135,22 @@ impl Client {
         self.get::<Owners>(&url).await.map(|data| data.users)
     }
 
+    async fn crate_reverse_dependencies_page(
+        &self,
+        crate_name: &str,
+        page: u64,
+    ) -> Result<ReverseDependenciesAsReceived, Error> {
+        let url = self
+            .base_url
+            .join(&format!(
+                "crates/{0}/reverse_dependencies?per_page=100&page={1}",
+                crate_name, page
+            ))
+            .unwrap();
+
+        self.get::<ReverseDependenciesAsReceived>(&url).await
+    }
+
     /// Load all reverse dependencies of a crate.
     ///
     /// Note: Since the reverse dependency endpoint requires pagination, this
@@ -142,46 +158,24 @@ impl Client {
     /// dependencies.
     pub async fn crate_reverse_dependencies(
         &self,
-        name: &str,
+        crate_name: &str,
     ) -> Result<ReverseDependencies, Error> {
-        fn fetch_page(
-            c: Client,
-            name: String,
-            mut tidy_rdeps: ReverseDependencies,
-            page: u64,
-        ) -> BoxFuture<'static, Result<ReverseDependencies, Error>> {
-            let url = c
-                .base_url
-                .join(&format!(
-                    "crates/{0}/reverse_dependencies?per_page=100&page={1}",
-                    name, page
-                ))
-                .unwrap();
+        let mut deps = ReverseDependencies {
+            dependencies: Vec::new(),
+            meta: Meta { total: 0 },
+        };
 
-            async move {
-                let rdeps = c.get::<ReverseDependenciesAsReceived>(&url).await?;
-                tidy_rdeps.add_reverse_deps(&rdeps);
-
-                if !rdeps.dependencies.is_empty() {
-                    tidy_rdeps.meta = rdeps.meta;
-                    fetch_page(c, name, tidy_rdeps, page + 1).await
-                } else {
-                    Ok(tidy_rdeps)
-                }
+        for page_number in 1.. {
+            let page = self
+                .crate_reverse_dependencies_page(crate_name, page_number)
+                .await?;
+            if page.dependencies.is_empty() {
+                break;
             }
-            .boxed()
+            deps.extend(page);
         }
 
-        fetch_page(
-            self.clone(),
-            name.to_string(),
-            ReverseDependencies {
-                dependencies: Vec::new(),
-                meta: Meta { total: 0 },
-            },
-            1,
-        )
-        .await
+        Ok(deps)
     }
 
     /// Retrieve the authors for a crate version.
