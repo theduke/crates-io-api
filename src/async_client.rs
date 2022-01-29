@@ -190,7 +190,7 @@ impl Client {
     }
 
     /// Retrieve download stats for a crate.
-    pub async fn crate_downloads(&self, name: &str) -> Result<Downloads, Error> {
+    pub async fn crate_downloads(&self, name: &str) -> Result<CrateDownloads, Error> {
         let url = self
             .base_url
             .join(&format!("crates/{}/downloads", name))

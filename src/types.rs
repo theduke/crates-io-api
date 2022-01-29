@@ -353,14 +353,14 @@ pub struct ExtraDownloads {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DownloadsMeta {
+pub struct CrateDownloadsMeta {
     pub extra_downloads: Vec<ExtraDownloads>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Downloads {
+pub struct CrateDownloads {
     pub version_downloads: Vec<VersionDownloads>,
-    pub meta: DownloadsMeta,
+    pub meta: CrateDownloadsMeta,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -487,7 +487,7 @@ pub struct FullCrate {
 
     pub categories: Vec<Category>,
     pub keywords: Vec<Keyword>,
-    pub downloads: Downloads,
+    pub downloads: CrateDownloads,
     pub owners: Vec<User>,
     pub reverse_dependencies: ReverseDependencies,
 
