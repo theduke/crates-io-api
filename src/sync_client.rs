@@ -263,38 +263,23 @@ impl SyncClient {
     /// per page and sorted alphabetically.
     ///
     /// ```rust
-    /// # use crates_io_api::{SyncClient, ListOptions, Sort, Error};
+    /// # use crates_io_api::{SyncClient, CratesQuery, Sort, Error};
     ///
     /// # fn f() -> Result<(), Error> {
     /// # let client = SyncClient::new( "my-bot-name (my-contact@domain.com)", std::time::Duration::from_millis(1000))?;
-    /// client.crates(ListOptions{
-    ///   sort: Sort::Alphabetical,
-    ///   per_page: 100,
-    ///   page: 1,
-    ///   query: Some("api".to_string()),
-    ///   ..Default::default()
-    /// })?;
+    /// let q = CratesQuery::builder()
+    ///   .sort(Sort::Alphabetical)
+    ///   .search("awesome")
+    ///   .build();
+    /// let crates = client.crates(q)?;
+    /// # std::mem::drop(crates);
     /// # Ok(())
     /// # }
     /// ```
-    pub fn crates(&self, spec: ListOptions) -> Result<CratesResponse, Error> {
+    pub fn crates(&self, query: CratesQuery) -> Result<CratesResponse, Error> {
         let mut url = self.base_url.join("crates")?;
-        {
-            let mut q = url.query_pairs_mut();
-            q.append_pair("page", &spec.page.to_string());
-            q.append_pair("per_page", &spec.per_page.to_string());
+        query.build(url.query_pairs_mut());
 
-            if spec.sort != Sort::Relevance {
-                q.append_pair("sort", spec.sort.to_str());
-            }
-
-            if let Some(id) = spec.user_id {
-                q.append_pair("user_id", &id.to_string());
-            }
-            if let Some(query) = spec.query {
-                q.append_pair("q", &query);
-            }
-        }
         self.get(url)
     }
 
@@ -306,12 +291,13 @@ impl SyncClient {
         let mut page = 1;
         let mut crates = Vec::new();
         loop {
-            let res = self.crates(ListOptions {
-                query: query.clone(),
+            let res = self.crates(CratesQuery {
+                search: query.clone(),
                 sort: Sort::Alphabetical,
                 per_page: 100,
                 page,
                 user_id: None,
+                category: None,
             })?;
             if !res.crates.is_empty() {
                 crates.extend(res.crates);
@@ -385,7 +371,7 @@ mod test {
 
         let user = client.user("theduke")?;
 
-        let res = client.crates(ListOptions {
+        let res = client.crates(CratesQuery {
             user_id: Some(user.id),
             per_page: 5,
             ..Default::default()
