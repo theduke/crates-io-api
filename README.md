@@ -25,3 +25,15 @@ A rate limiter is included and enabled by default.
 ## Usage
 
 For usage information and examples, check out the [Documentation][docsrs].
+
+## rustls
+
+By default the system TLS implementation is used.
+
+You can also use [rustls](https://github.com/rustls/rustls).
+
+`Cargo.toml:`
+```
+[dependencies]
+crates_io_api = { version = "?", default-features = false, features = ["rustls"] }
+```
