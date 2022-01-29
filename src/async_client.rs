@@ -187,26 +187,21 @@ impl Client {
     /// Retrieve information of a crate.
     ///
     /// If you require detailed information, consider using [full_crate]().
-    pub async fn get_crate(&self, name: &str) -> Result<CrateResponse, Error> {
-        let url = self.base_url.join("crates/").unwrap().join(name).unwrap();
+    pub async fn get_crate(&self, crate_name: &str) -> Result<CrateResponse, Error> {
+        let url = build_crate_url(&self.base_url, crate_name)?;
+
         self.get(&url).await
     }
 
     /// Retrieve download stats for a crate.
-    pub async fn crate_downloads(&self, name: &str) -> Result<CrateDownloads, Error> {
-        let url = self
-            .base_url
-            .join(&format!("crates/{}/downloads", name))
-            .unwrap();
+    pub async fn crate_downloads(&self, crate_name: &str) -> Result<CrateDownloads, Error> {
+        let url = build_crate_downloads_url(&self.base_url, crate_name)?;
         self.get(&url).await
     }
 
     /// Retrieve the owners of a crate.
     pub async fn crate_owners(&self, name: &str) -> Result<Vec<User>, Error> {
-        let url = self
-            .base_url
-            .join(&format!("crates/{}/owners", name))
-            .unwrap();
+        let url = build_crate_owners_url(&self.base_url, name)?;
         self.get::<Owners>(&url).await.map(|data| data.users)
     }
 
@@ -221,14 +216,7 @@ impl Client {
         // If page is zero, bump it to 1.
         let page = page.max(1);
 
-        let url = self
-            .base_url
-            .join(&format!(
-                "crates/{0}/reverse_dependencies?per_page=100&page={1}",
-                crate_name, page
-            ))
-            .unwrap();
-
+        let url = build_crate_reverse_deps_url(&self.base_url, crate_name, page)?;
         let page = self.get::<ReverseDependenciesAsReceived>(&url).await?;
 
         let mut deps = ReverseDependencies {
@@ -275,11 +263,8 @@ impl Client {
     }
 
     /// Retrieve the authors for a crate version.
-    pub async fn crate_authors(&self, name: &str, version: &str) -> Result<Authors, Error> {
-        let url = self
-            .base_url
-            .join(&format!("crates/{}/{}/authors", name, version))
-            .unwrap();
+    pub async fn crate_authors(&self, crate_name: &str, version: &str) -> Result<Authors, Error> {
+        let url = build_crate_authors_url(&self.base_url, crate_name, version)?;
         self.get::<AuthorsResponse>(&url).await.map(|res| Authors {
             names: res.meta.names,
         })
@@ -288,13 +273,10 @@ impl Client {
     /// Retrieve the dependencies of a crate version.
     pub async fn crate_dependencies(
         &self,
-        name: &str,
+        crate_name: &str,
         version: &str,
     ) -> Result<Vec<Dependency>, Error> {
-        let url = self
-            .base_url
-            .join(&format!("crates/{}/{}/dependencies", name, version))
-            .unwrap();
+        let url = build_crate_dependencies_url(&self.base_url, crate_name, version)?;
         self.get::<Dependencies>(&url)
             .await
             .map(|res| res.dependencies)
@@ -394,6 +376,65 @@ impl Client {
         let url = self.base_url.join(&format!("users/{}", username)).unwrap();
         self.get::<UserResponse>(&url).await.map(|res| res.user)
     }
+}
+
+pub(crate) fn build_crate_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
+    let mut url = base.join("crates/")?;
+    url.path_segments_mut().unwrap().push(crate_name);
+
+    // Guard against slashes in the crate name.
+    // The API returns a nonsensical error in this case.
+    if crate_name.contains('/') {
+        Err(Error::NotFound(crate::error::NotFound {
+            url: url.to_string(),
+        }))
+    } else {
+        Ok(url)
+    }
+}
+
+pub(crate) fn build_crate_downloads_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
+    build_crate_url(base, crate_name)?
+        .join("downloads")
+        .map_err(Error::from)
+}
+
+pub(crate) fn build_crate_owners_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
+    build_crate_url(base, crate_name)?
+        .join("owners")
+        .map_err(Error::from)
+}
+
+pub(crate) fn build_crate_reverse_deps_url(
+    base: &Url,
+    crate_name: &str,
+    page: u64,
+) -> Result<Url, Error> {
+    build_crate_url(base, crate_name)?
+        .join(&format!("reverse_dependencies?per_page=100&page={page}"))
+        .map_err(Error::from)
+}
+
+pub(crate) fn build_crate_authors_url(
+    base: &Url,
+    crate_name: &str,
+    version: &str,
+) -> Result<Url, Error> {
+    build_crate_url(base, crate_name)?
+        .join(version)?
+        .join("authors")
+        .map_err(Error::from)
+}
+
+pub(crate) fn build_crate_dependencies_url(
+    base: &Url,
+    crate_name: &str,
+    version: &str,
+) -> Result<Url, Error> {
+    build_crate_url(base, crate_name)?
+        .join(version)?
+        .join("dependencies")
+        .map_err(Error::from)
 }
 
 #[cfg(test)]
@@ -512,4 +553,5 @@ mod test {
 
         Ok(())
     }
+
 }
