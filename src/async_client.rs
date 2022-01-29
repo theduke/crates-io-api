@@ -460,7 +460,7 @@ mod test {
         let res = client
             .crates(CratesQuery {
                 user_id: Some(user.id),
-                per_page: 5,
+                per_page: 20,
                 ..Default::default()
             })
             .await?;
@@ -470,6 +470,30 @@ mod test {
         for krate in res.crates {
             let owners = client.crate_owners(&krate.name).await?;
             assert!(owners.iter().any(|o| o.id == user.id));
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_crates_filter_by_category_async() -> Result<(), Error> {
+        let client = build_test_client();
+
+        let category = "wasm".to_string();
+
+        let res = client
+            .crates(CratesQuery {
+                category: Some(category.clone()),
+                per_page: 3,
+                ..Default::default()
+            })
+            .await?;
+
+        assert!(!res.crates.is_empty());
+        // Ensure all found crates have the given category.
+        for list_crate in res.crates {
+            let krate = client.get_crate(&list_crate.name).await?;
+            assert!(krate.categories.iter().any(|c| c.id == category));
         }
 
         Ok(())
