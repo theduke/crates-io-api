@@ -115,7 +115,7 @@ impl Client {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
-    /// )?;
+    /// ).unwrap();
     /// # Ok(())
     /// # }
     /// ```

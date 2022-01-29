@@ -33,7 +33,7 @@ impl SyncClient {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
-    /// )?;
+    /// ).unwrap();
     /// # Ok(())
     /// # }
     /// ```
@@ -288,7 +288,10 @@ impl SyncClient {
     /// # use crates_io_api::{SyncClient, CratesQuery, Sort, Error};
     ///
     /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let client = SyncClient::new( "my-bot-name (my-contact@domain.com)", std::time::Duration::from_millis(1000))?;
+    /// # let client = SyncClient::new(
+    /// #     "my-bot-name (my-contact@domain.com)",
+    /// #     std::time::Duration::from_millis(1000),
+    /// # ).unwrap();
     /// let q = CratesQuery::builder()
     ///   .sort(Sort::Alphabetical)
     ///   .search("awesome")
