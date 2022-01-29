@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.8.0 - 2022-01-29
+
+This version has quite a few breaking changes, 
+mainly to clean up and future-proof the API.
+
+### Features
+
+* Get user data with `Client::user()`
+* Filter crates by category
+* Filter crates by user_id
+* Add `reverse_dependency_count()` to easily get the number of reverse deps
+* Allow retrieving single reverse dependency pages (`crate_reverse_dependencies_page`)
+* (async): Add a paginated Stream for listing crates (`AsyncClient::crates_stream()`)
+
+### (Breaking) Changes
+
+* Error
+  - make Error #[non_exhaustive]
+  - add Error::Api variant
+  - Rename NotFound => NotFoundError
+  - Rename PermissionDenied => PermissionDeniedError
+  - Remove InvalidHeaders variant (only relevant for client construction)
+
+* Types
+  - Rename `CratesResponse` => `CratesPage`
+  - Rename `DownloadsMeta` => `CrateDownloadsMeta`
+  - Rename `Downloads` => `CrateDownloads`
+  - Don't expose internal types (`AuthorsResponse`)
+  - Remove unused `Authors`/`FullVersion`::users field
+
+* General
+  - Properly handle API errors (Error::Api variant)
+
+* Querying
+  - rename `ListOptions` to `CratesQuery`
+  - make `CratesQuery` fields private (future proofing)
+  - add `CratesQueryBuilder` for query construction
+
+### Sync Client
+
+* Remove `all_crates` method, which should never have been there...
+
+### Async Client
+
+* Clean up the old pre-async futures code
+* Don't auto-clone: futures are now tied to the client lifetime.
+  Manually clone if you need the futures to be owned.
+
+
 ## 0.7.3 - 2021-10-26
 
 * Fix sort by relevance (https://github.com/theduke/crates_io_api/pull/35)
