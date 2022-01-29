@@ -38,23 +38,150 @@ impl Sort {
 ///
 /// Used to specify pagination, sorting and a query.
 #[derive(Clone, Debug)]
-pub struct ListOptions {
-    pub sort: Sort,
-    pub per_page: u64,
-    pub page: u64,
-    pub user_id: Option<u64>,
-    pub query: Option<String>,
+pub struct CratesQuery {
+    /// Sort.
+    pub(crate) sort: Sort,
+    /// Number of items per page.
+    pub(crate) per_page: u64,
+    /// The page to fetch.
+    pub(crate) page: u64,
+    pub(crate) user_id: Option<u64>,
+    /// Search query string.
+    pub(crate) search: Option<String>,
 }
 
-impl Default for ListOptions {
+impl CratesQuery {
+    pub(crate) fn build(&self, mut q: url::form_urlencoded::Serializer<'_, url::UrlQuery<'_>>) {
+        q.append_pair("page", &self.page.to_string());
+        q.append_pair("per_page", &self.per_page.to_string());
+        q.append_pair("sort", self.sort.to_str());
+        if let Some(id) = self.user_id {
+            q.append_pair("user_id", &id.to_string());
+        }
+        if let Some(search) = &self.search {
+            q.append_pair("q", search);
+        }
+    }
+}
+impl CratesQuery {
+    pub fn builder() -> CratesQueryBuilder {
+        CratesQueryBuilder::new()
+    }
+
+    /// Get a reference to the crate query's sort.
+    pub fn sort(&self) -> &Sort {
+        &self.sort
+    }
+
+    /// Set the crate query's sort.
+    pub fn set_sort(&mut self, sort: Sort) {
+        self.sort = sort;
+    }
+
+    /// Get the crate query's per page.
+    pub fn page_size(&self) -> u64 {
+        self.per_page
+    }
+
+    /// Set the crate query's per page.
+    pub fn set_page_size(&mut self, per_page: u64) {
+        self.per_page = per_page;
+    }
+
+    /// Get the crate query's page.
+    pub fn page(&self) -> u64 {
+        self.page
+    }
+
+    /// Set the crate query's page.
+    pub fn set_page(&mut self, page: u64) {
+        self.page = page;
+    }
+
+    /// Get the crate query's user id.
+    pub fn user_id(&self) -> Option<u64> {
+        self.user_id
+    }
+
+    /// Set the crate query's user id.
+    pub fn set_user_id(&mut self, user_id: Option<u64>) {
+        self.user_id = user_id;
+    }
+
+    /// Get a reference to the crate query's search.
+    pub fn search(&self) -> Option<&String> {
+        self.search.as_ref()
+    }
+
+    /// Set the crate query's search.
+    pub fn set_search(&mut self, search: Option<String>) {
+        self.search = search;
+    }
+}
+
+impl Default for CratesQuery {
     fn default() -> Self {
         Self {
             sort: Sort::RecentUpdates,
             per_page: 30,
             page: 1,
             user_id: None,
-            query: None,
+            search: None,
         }
+    }
+}
+
+pub struct CratesQueryBuilder {
+    query: CratesQuery,
+}
+
+impl CratesQueryBuilder {
+    /// Construct a new builder.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            query: CratesQuery::default(),
+        }
+    }
+
+    /// Set the sorting method.
+    #[must_use]
+    pub fn sort(mut self, sort: Sort) -> Self {
+        self.query.sort = sort;
+        self
+    }
+
+    /// Set the page size.
+    #[must_use]
+    pub fn page_size(mut self, size: u64) -> Self {
+        self.query.per_page = size;
+        self
+    }
+
+    /// Filter by a user id.
+    #[must_use]
+    pub fn user_id(mut self, user_id: u64) -> Self {
+        self.query.user_id = Some(user_id);
+        self
+    }
+
+    /// Search term.
+    #[must_use]
+    pub fn search(mut self, search: impl Into<String>) -> Self {
+        self.query.search = Some(search.into());
+        self
+    }
+
+    /// Finalize the builder into a usable [`CratesQuery`].
+    #[must_use]
+    pub fn build(self) -> CratesQuery {
+        self.query
+    }
+}
+
+impl Default for CratesQueryBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -20,7 +20,7 @@ pub struct Client {
 
 pub struct CrateStream {
     client: Client,
-    filter: ListOptions,
+    filter: CratesQuery,
 
     closed: bool,
     items: VecDeque<Crate>,
@@ -28,7 +28,7 @@ pub struct CrateStream {
 }
 
 impl CrateStream {
-    fn new(client: Client, filter: ListOptions) -> Self {
+    fn new(client: Client, filter: CratesQuery) -> Self {
         Self {
             client,
             filter,
@@ -376,28 +376,13 @@ impl Client {
     ///
     /// If you want to get all results without worrying about paging,
     /// use [`all_crates`].
-    pub async fn crates(&self, spec: ListOptions) -> Result<CratesResponse, Error> {
+    pub async fn crates(&self, query: CratesQuery) -> Result<CratesResponse, Error> {
         let mut url = self.base_url.join("crates").unwrap();
-        {
-            let mut q = url.query_pairs_mut();
-
-            // If page is zero, bump it to one since pages start at 1.
-            let page = spec.page.max(1);
-
-            q.append_pair("page", &page.to_string());
-            q.append_pair("per_page", &spec.per_page.to_string());
-            q.append_pair("sort", spec.sort.to_str());
-            if let Some(user_id) = spec.user_id {
-                q.append_pair("user_id", &user_id.to_string());
-            }
-            if let Some(query) = spec.query {
-                q.append_pair("q", &query);
-            }
-        }
+        query.build(url.query_pairs_mut());
         self.get(&url).await
     }
 
-    pub fn crates_stream(&self, filter: ListOptions) -> CrateStream {
+    pub fn crates_stream(&self, filter: CratesQuery) -> CrateStream {
         CrateStream::new(self.clone(), filter)
     }
 
@@ -439,7 +424,7 @@ mod test {
     async fn test_crates_stream_async() {
         let client = build_test_client();
 
-        let mut stream = client.crates_stream(ListOptions {
+        let mut stream = client.crates_stream(CratesQuery {
             per_page: 10,
             ..Default::default()
         });
@@ -473,7 +458,7 @@ mod test {
         let user = client.user("theduke").await?;
 
         let res = client
-            .crates(ListOptions {
+            .crates(CratesQuery {
                 user_id: Some(user.id),
                 per_page: 5,
                 ..Default::default()
