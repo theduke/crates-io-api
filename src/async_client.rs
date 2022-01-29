@@ -367,7 +367,7 @@ impl Client {
 mod test {
     use super::*;
 
-    fn test_client() -> Client {
+    fn build_test_client() -> Client {
         Client::new(
             "crates-io-api-test (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
@@ -380,45 +380,45 @@ mod test {
         // Create tokio runtime
         let rt = tokio::runtime::Runtime::new().unwrap();
 
-        // Instantiate the client.
-        let client = test_client();
-        // Retrieve summary data.
-        let summary = rt.block_on(client.summary())?;
-        for c in summary.most_downloaded {
-            println!("{}:", c.id);
-            for dep in rt.block_on(client.crate_dependencies(&c.id, &c.max_version))? {
-                // Ignore optional dependencies.
-                if !dep.optional {
-                    println!("    * {} - {}", dep.id, dep.version_id);
-                }
+        rt.block_on(async {
+            // Instantiate the client.
+            let client = build_test_client();
+            // Retrieve summary data.
+            let summary = client.summary().await?;
+            for c in summary.most_downloaded.iter().take(5) {
+                let _deps = client.crate_dependencies(&c.id, &c.max_version).await?;
             }
-        }
-        Ok(())
+
+            Ok(())
+        })
     }
 
     #[test]
-    fn test_client_async() {
+    fn test_client_async() -> Result<(), Error> {
         println!("Async Client test: Starting runtime");
         let rt = ::tokio::runtime::Runtime::new().unwrap();
 
-        println!("Creating client");
-        let client = test_client();
+        rt.block_on(async {
+            let client = build_test_client();
 
-        println!("Getting summary");
-        let summary = rt.block_on(client.summary()).unwrap();
-        assert!(summary.most_downloaded.len() > 0);
+            let summary = client.summary().await.unwrap();
+            assert!(summary.most_downloaded.len() > 0);
 
-        println!("Getting three most downloaded crates");
-        for item in &summary.most_downloaded[0..3] {
-            println!("Geting crate: {}", &item.name);
-            let _ = rt.block_on(client.full_crate(&item.name, false)).unwrap();
-        }
+            for item in &summary.most_downloaded[0..3] {
+                let _ = client.full_crate(&item.name, false).await.unwrap();
+            }
 
-        println!("Getting three crates from `all_crates`");
-        let crates = rt.block_on(client.all_crates(None).take(3).collect::<Vec<_>>());
-        for c in crates {
-            let c = c.unwrap();
-            println!("Crate: {:#?}", c);
-        }
+            let items = client
+                .all_crates(None)
+                .take(3)
+                .try_fold(Vec::new(), |mut acc, item| async move {
+                    acc.push(item);
+                    Ok(acc)
+                })
+                .await
+                .unwrap();
+            assert!(items.len() == 3);
+            Ok(())
+        })
     }
 }

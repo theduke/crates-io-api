@@ -274,11 +274,11 @@ impl SyncClient {
             let mut q = url.query_pairs_mut();
             q.append_pair("page", &spec.page.to_string());
             q.append_pair("per_page", &spec.per_page.to_string());
-            
+
             if spec.sort != Sort::Relevance {
                 q.append_pair("sort", spec.sort.to_str());
             }
-            
+
             if let Some(query) = spec.query {
                 q.append_pair("q", &query);
             }
@@ -315,7 +315,7 @@ impl SyncClient {
 mod test {
     use super::*;
 
-    fn test_client() -> SyncClient {
+    fn build_test_client() -> SyncClient {
         SyncClient::new(
             "crates-io-api-test (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
@@ -326,24 +326,18 @@ mod test {
     #[test]
     fn list_top_dependencies_sync() -> Result<(), Error> {
         // Instantiate the client.
-        let client = test_client();
+        let client = build_test_client();
         // Retrieve summary data.
         let summary = client.summary()?;
         for c in summary.most_downloaded {
-            println!("{}:", c.id);
-            for dep in client.crate_dependencies(&c.id, &c.max_version)? {
-                // Ignore optional dependencies.
-                if !dep.optional {
-                    println!("    * {} - {}", dep.id, dep.version_id);
-                }
-            }
+            let _deps = client.crate_dependencies(&c.id, &c.max_version)?;
         }
         Ok(())
     }
 
     #[test]
     fn test_client_sync() {
-        let client = test_client();
+        let client = build_test_client();
         let summary = client.summary().unwrap();
         assert!(summary.most_downloaded.len() > 0);
 
@@ -352,10 +346,10 @@ mod test {
         }
     }
 
-    /// Ensure that the sync client remains send.
+    /// Ensure that the sync Client remains send.
     #[test]
     fn sync_client_ensure_send() {
-        let client = test_client();
+        let client = build_test_client();
         let _: &dyn Send = &client;
     }
 }
