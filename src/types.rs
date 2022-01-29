@@ -245,7 +245,9 @@ pub struct Crate {
     // pub badges: Vec<??>,
     pub downloads: u64,
     pub recent_downloads: Option<u64>,
+    /// NOTE: not set if the crate was loaded via a list query.
     pub categories: Option<Vec<String>>,
+    /// NOTE: not set if the crate was loaded via a list query.
     pub keywords: Option<Vec<String>>,
     pub versions: Option<Vec<u64>>,
     pub max_version: String,
