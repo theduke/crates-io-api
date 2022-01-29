@@ -287,7 +287,8 @@ pub struct Crate {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CratesResponse {
+#[allow(missing_docs)]
+pub struct CratesPage {
     pub crates: Vec<Crate>,
     #[serde(default)]
     pub versions: Vec<Version>,
@@ -524,6 +525,6 @@ pub struct FullCrate {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserResponse {
+pub(crate) struct UserResponse {
     pub user: User,
 }

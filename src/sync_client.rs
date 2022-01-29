@@ -284,7 +284,7 @@ impl SyncClient {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn crates(&self, query: CratesQuery) -> Result<CratesResponse, Error> {
+    pub fn crates(&self, query: CratesQuery) -> Result<CratesPage, Error> {
         let mut url = self.base_url.join("crates")?;
         query.build(url.query_pairs_mut());
 
