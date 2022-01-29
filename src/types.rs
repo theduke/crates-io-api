@@ -46,6 +46,11 @@ pub struct CratesQuery {
     /// The page to fetch.
     pub(crate) page: u64,
     pub(crate) user_id: Option<u64>,
+    /// Crates.io category name.
+    /// See https://crates.io/categories
+    /// NOTE: requires lower-case dash-separated categories, not the pretty
+    /// titles visible in the listing linked above.
+    pub(crate) category: Option<String>,
     /// Search query string.
     pub(crate) search: Option<String>,
 }
@@ -61,8 +66,12 @@ impl CratesQuery {
         if let Some(search) = &self.search {
             q.append_pair("q", search);
         }
+        if let Some(cat) = &self.category {
+            q.append_pair("category", cat);
+        }
     }
 }
+
 impl CratesQuery {
     pub fn builder() -> CratesQueryBuilder {
         CratesQueryBuilder::new()
@@ -108,6 +117,16 @@ impl CratesQuery {
         self.user_id = user_id;
     }
 
+    /// Get a reference to the crate query's category.
+    pub fn category(&self) -> Option<&String> {
+        self.category.as_ref()
+    }
+
+    /// Set the crate query's category.
+    pub fn set_category(&mut self, category: Option<String>) {
+        self.category = category;
+    }
+
     /// Get a reference to the crate query's search.
     pub fn search(&self) -> Option<&String> {
         self.search.as_ref()
@@ -126,6 +145,7 @@ impl Default for CratesQuery {
             per_page: 30,
             page: 1,
             user_id: None,
+            category: None,
             search: None,
         }
     }
@@ -162,6 +182,16 @@ impl CratesQueryBuilder {
     #[must_use]
     pub fn user_id(mut self, user_id: u64) -> Self {
         self.query.user_id = Some(user_id);
+        self
+    }
+
+    /// Crates.io category name.
+    /// See https://crates.io/categories
+    /// NOTE: requires lower-case dash-separated categories, not the pretty
+    /// titles visible in the listing linked above.
+    #[must_use]
+    pub fn category(mut self, category: impl Into<String>) -> Self {
+        self.query.category = Some(category.into());
         self
     }
 
