@@ -26,7 +26,7 @@ A rate limiter is included and enabled by default.
 
 For usage information and examples, check out the [Documentation][docsrs].
 
-## rustls
+### rustls
 
 By default the system TLS implementation is used.
 
