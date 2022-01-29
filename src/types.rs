@@ -21,9 +21,7 @@ impl std::fmt::Display for ApiError {
         write!(
             f,
             "{}",
-            self.detail
-                .as_deref()
-                .unwrap_or("Unknown API Error")
+            self.detail.as_deref().unwrap_or("Unknown API Error")
         )
     }
 }
