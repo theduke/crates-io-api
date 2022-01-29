@@ -1,7 +1,7 @@
 # crates-io-api
 
-[![Crate][cratesioimg][cratesio]]
-[![API Docs][docsrsimg][docsrs]]
+[![Crate][cratesioimg]][cratesio]
+[![API Docs][docsrsimg]][docsrs]
 
 [cratesio]: https://crates.io/crates/crates_io_api
 [cratesioimg]: https://img.shields.io/crates/v/inkpad-runtime.svg
