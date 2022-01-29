@@ -24,7 +24,7 @@ pub struct CrateStream {
 
     closed: bool,
     items: VecDeque<Crate>,
-    next_page_fetch: Option<BoxFuture<'static, Result<CratesResponse, Error>>>,
+    next_page_fetch: Option<BoxFuture<'static, Result<CratesPage, Error>>>,
 }
 
 impl CrateStream {
@@ -361,7 +361,7 @@ impl Client {
     ///
     /// If you want to get all results without worrying about paging,
     /// use [`all_crates`].
-    pub async fn crates(&self, query: CratesQuery) -> Result<CratesResponse, Error> {
+    pub async fn crates(&self, query: CratesQuery) -> Result<CratesPage, Error> {
         let mut url = self.base_url.join("crates").unwrap();
         query.build(url.query_pairs_mut());
         self.get(&url).await
