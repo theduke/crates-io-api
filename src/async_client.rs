@@ -178,6 +178,12 @@ impl Client {
         Ok(deps)
     }
 
+    /// Get the total count of reverse dependencies for a given crate.
+    pub async fn crate_reverse_dependency_count(&self, crate_name: &str) -> Result<u64, Error> {
+        let page = self.crate_reverse_dependencies_page(crate_name, 1).await?;
+        Ok(page.meta.total)
+    }
+
     /// Retrieve the authors for a crate version.
     pub async fn crate_authors(&self, name: &str, version: &str) -> Result<Authors, Error> {
         let url = self
@@ -402,7 +408,6 @@ mod test {
         Ok(())
     }
 
-
     #[tokio::test]
     async fn test_user_get_async() -> Result<(), Error> {
         let client = build_test_client();
@@ -431,6 +436,17 @@ mod test {
             let owners = client.crate_owners(&krate.name).await?;
             assert!(owners.iter().any(|o| o.id == user.id));
         }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_crate_reverse_dependency_count() -> Result<(), Error> {
+        let client = build_test_client();
+        let count = client
+            .crate_reverse_dependency_count("crates_io_api")
+            .await?;
+        assert!(count > 0);
 
         Ok(())
     }
