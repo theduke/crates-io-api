@@ -274,6 +274,7 @@ impl SyncClient {
     ///   per_page: 100,
     ///   page: 1,
     ///   query: Some("api".to_string()),
+    ///   ..Default::default()
     /// })?;
     /// # Ok(())
     /// # }
