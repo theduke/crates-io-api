@@ -10,8 +10,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        rust-channel: [stable, nightly]
+
     steps:
     - uses: actions/checkout@v2
+
+    - uses: actions-rs/toolchain@v1
+      with:
+          toolchain: ${{ matrix.rust-channel }}
+          override: true
+          components: rustfmt, clippy
 
     - name: Build
       run: cargo build --verbose --release
