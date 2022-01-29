@@ -71,14 +71,14 @@ impl SyncClient {
 
         let res = self.client.get(url.clone()).send()?;
         let result = match res.status() {
-            StatusCode::NOT_FOUND => Err(Error::NotFound(super::NotFound {
+            StatusCode::NOT_FOUND => Err(Error::NotFound(super::error::NotFoundError {
                 url: url.to_string(),
             })),
             StatusCode::FORBIDDEN => {
                 let reason = res.text().unwrap_or_default();
-                Err(Error::PermissionDenied(super::error::PermissionDenied {
-                    reason,
-                }))
+                Err(Error::PermissionDenied(
+                    super::error::PermissionDeniedError { reason },
+                ))
             }
             _ if !res.status().is_success() => {
                 Err(Error::from(res.error_for_status().unwrap_err()))

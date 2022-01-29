@@ -155,14 +155,14 @@ impl Client {
         let res = self.client.get(url.clone()).send().await?;
 
         let result = match res.status() {
-            StatusCode::NOT_FOUND => Err(Error::NotFound(super::NotFound {
+            StatusCode::NOT_FOUND => Err(Error::NotFound(super::error::NotFoundError {
                 url: url.to_string(),
             })),
             StatusCode::FORBIDDEN => {
                 let reason = res.text().await.unwrap_or_default();
-                Err(Error::PermissionDenied(super::error::PermissionDenied {
-                    reason,
-                }))
+                Err(Error::PermissionDenied(
+                    super::error::PermissionDeniedError { reason },
+                ))
             }
             _ if !res.status().is_success() => {
                 Err(Error::from(res.error_for_status().unwrap_err()))
@@ -385,7 +385,7 @@ pub(crate) fn build_crate_url(base: &Url, crate_name: &str) -> Result<Url, Error
     // Guard against slashes in the crate name.
     // The API returns a nonsensical error in this case.
     if crate_name.contains('/') {
-        Err(Error::NotFound(crate::error::NotFound {
+        Err(Error::NotFound(crate::error::NotFoundError {
             url: url.to_string(),
         }))
     } else {
@@ -400,7 +400,7 @@ fn build_crate_url_nested(base: &Url, crate_name: &str) -> Result<Url, Error> {
     // Guard against slashes in the crate name.
     // The API returns a nonsensical error in this case.
     if crate_name.contains('/') {
-        Err(Error::NotFound(crate::error::NotFound {
+        Err(Error::NotFound(crate::error::NotFoundError {
             url: url.to_string(),
         }))
     } else {

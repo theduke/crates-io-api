@@ -1,13 +1,18 @@
 //! Error types.
 
+/// Errors returned by the api client.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
+    /// Low-level http error.
     Http(reqwest::Error),
+    /// Invalid URL.
     Url(url::ParseError),
-    InvalidHeader(reqwest::header::InvalidHeaderValue),
-    NotFound(NotFound),
-    PermissionDenied(PermissionDenied),
+    /// Crate could not be found.
+    NotFound(NotFoundError),
+    /// No permission to access the resource.
+    PermissionDenied(PermissionDeniedError),
+    /// Error returned by the crates.io API directly.
     Api(crate::types::ApiErrors),
 }
 
@@ -16,7 +21,6 @@ impl std::fmt::Display for Error {
         match self {
             Error::Http(e) => e.fmt(f),
             Error::Url(e) => e.fmt(f),
-            Error::InvalidHeader(e) => e.fmt(f),
             Error::NotFound(e) => e.fmt(f),
             Error::PermissionDenied(e) => e.fmt(f),
             Error::Api(err) => {
@@ -41,7 +45,6 @@ impl std::error::Error for Error {
         match self {
             Error::Http(e) => Some(e),
             Error::Url(e) => Some(e),
-            Error::InvalidHeader(e) => Some(e),
             Error::NotFound(_) => None,
             Error::PermissionDenied(_) => None,
             Error::Api(_) => None,
@@ -73,29 +76,25 @@ impl From<url::ParseError> for Error {
     }
 }
 
-impl From<reqwest::header::InvalidHeaderValue> for Error {
-    fn from(e: reqwest::header::InvalidHeaderValue) -> Self {
-        Error::InvalidHeader(e)
-    }
-}
-
+/// Error returned when a resource could not be found.
 #[derive(Debug)]
-pub struct NotFound {
+pub struct NotFoundError {
     pub(crate) url: String,
 }
 
-impl std::fmt::Display for NotFound {
+impl std::fmt::Display for NotFoundError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Resouce at url '{}' could not be found", self.url)
     }
 }
 
+/// Error returned when a resource is not accessible.
 #[derive(Debug)]
-pub struct PermissionDenied {
+pub struct PermissionDeniedError {
     pub(crate) reason: String,
 }
 
-impl std::fmt::Display for PermissionDenied {
+impl std::fmt::Display for PermissionDeniedError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Permission denied: {}", self.reason)
     }
