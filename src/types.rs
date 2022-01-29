@@ -46,6 +46,18 @@ pub struct ListOptions {
     pub query: Option<String>,
 }
 
+impl Default for ListOptions {
+    fn default() -> Self {
+        Self {
+            sort: Sort::RecentUpdates,
+            per_page: 30,
+            page: 1,
+            user_id: None,
+            query: None,
+        }
+    }
+}
+
 /// Pagination information.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Meta {
