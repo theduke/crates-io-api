@@ -134,7 +134,7 @@ impl SyncClient {
 
             rdeps = self.get(url)?;
 
-            tidy_rdeps.from_received(&rdeps);
+            tidy_rdeps.add_reverse_deps(&rdeps);
 
             if !rdeps.dependencies.is_empty() {
                 tidy_rdeps.meta = rdeps.meta;
