@@ -42,7 +42,7 @@ pub struct ListOptions {
     pub sort: Sort,
     pub per_page: u64,
     pub page: u64,
-    pub user_id: Option<String>,
+    pub user_id: Option<u64>,
     pub query: Option<String>,
 }
 
@@ -328,5 +328,5 @@ pub struct FullCrate {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserResponse {
-    pub user: User
+    pub user: User,
 }
