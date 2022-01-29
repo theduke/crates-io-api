@@ -164,7 +164,6 @@ impl SyncClient {
         let res: AuthorsResponse = self.get(url)?;
         Ok(Authors {
             names: res.meta.names,
-            users: res.users,
         })
     }
 
@@ -195,7 +194,6 @@ impl SyncClient {
             readme_path: version.readme_path,
 
             author_names: authors.names,
-            authors: authors.users,
             dependencies: deps,
         };
         Ok(v)
