@@ -1,14 +1,10 @@
+use futures::future::BoxFuture;
 use futures::prelude::*;
-use futures::{
-    future::{try_join_all, TryFutureExt},
-    stream::{self, TryStreamExt},
-    try_join,
-};
-use log::trace;
+use futures::{future::try_join_all, try_join};
 use reqwest::{header, Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
-use std::iter::FromIterator;
+use std::collections::VecDeque;
 
 use super::Error;
 use crate::types::*;
@@ -20,6 +16,84 @@ pub struct Client {
     rate_limit: std::time::Duration,
     last_request_time: std::sync::Arc<tokio::sync::Mutex<Option<tokio::time::Instant>>>,
     base_url: Url,
+}
+
+pub struct CrateStream {
+    client: Client,
+    filter: ListOptions,
+
+    closed: bool,
+    items: VecDeque<Crate>,
+    next_page_fetch: Option<BoxFuture<'static, Result<CratesResponse, Error>>>,
+}
+
+impl CrateStream {
+    fn new(client: Client, filter: ListOptions) -> Self {
+        Self {
+            client,
+            filter,
+            closed: false,
+            items: VecDeque::new(),
+            next_page_fetch: None,
+        }
+    }
+}
+
+impl futures::stream::Stream for CrateStream {
+    type Item = Result<Crate, Error>;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        let inner = self.get_mut();
+
+        if inner.closed {
+            return std::task::Poll::Ready(None);
+        }
+
+        if let Some(krate) = inner.items.pop_front() {
+            return std::task::Poll::Ready(Some(Ok(krate)));
+        }
+
+        if let Some(mut fut) = inner.next_page_fetch.take() {
+            return match fut.poll_unpin(cx) {
+                std::task::Poll::Ready(res) => match res {
+                    Ok(page) if page.crates.is_empty() => {
+                        inner.closed = true;
+                        std::task::Poll::Ready(None)
+                    }
+                    Ok(page) => {
+                        let mut iter = page.crates.into_iter();
+                        let next = iter.next();
+                        inner.items.extend(iter);
+
+                        std::task::Poll::Ready(next.map(Ok))
+                    }
+                    Err(err) => {
+                        inner.closed = true;
+                        std::task::Poll::Ready(Some(Err(err)))
+                    }
+                },
+                std::task::Poll::Pending => {
+                    inner.next_page_fetch = Some(fut);
+                    std::task::Poll::Pending
+                }
+            };
+        }
+
+        let filter = inner.filter.clone();
+        inner.filter.page += 1;
+
+        let c = inner.client.clone();
+        let mut f = Box::pin(async move { c.crates(filter).await });
+        assert!(matches!(f.poll_unpin(cx), std::task::Poll::Pending));
+        inner.next_page_fetch = Some(f);
+
+        cx.waker().clone().wake();
+
+        std::task::Poll::Pending
+    }
 }
 
 impl Client {
@@ -69,8 +143,6 @@ impl Client {
     }
 
     async fn get<T: DeserializeOwned>(&self, url: &Url) -> Result<T, Error> {
-        trace!("GET {}", url);
-
         let mut lock = self.last_request_time.clone().lock_owned().await;
 
         if let Some(last_request_time) = lock.take() {
@@ -135,11 +207,17 @@ impl Client {
         self.get::<Owners>(&url).await.map(|data| data.users)
     }
 
-    async fn crate_reverse_dependencies_page(
+    /// Get a single page of reverse dependencies.
+    ///
+    /// Note: page must be >= 1.
+    pub async fn crate_reverse_dependencies_page(
         &self,
         crate_name: &str,
         page: u64,
-    ) -> Result<ReverseDependenciesAsReceived, Error> {
+    ) -> Result<ReverseDependencies, Error> {
+        // If page is zero, bump it to 1.
+        let page = page.max(1);
+
         let url = self
             .base_url
             .join(&format!(
@@ -148,7 +226,15 @@ impl Client {
             ))
             .unwrap();
 
-        self.get::<ReverseDependenciesAsReceived>(&url).await
+        let page = self.get::<ReverseDependenciesAsReceived>(&url).await?;
+
+        let mut deps = ReverseDependencies {
+            dependencies: Vec::new(),
+            meta: Meta { total: 0 },
+        };
+        deps.meta.total = page.meta.total;
+        deps.extend(page);
+        Ok(deps)
     }
 
     /// Load all reverse dependencies of a crate.
@@ -172,7 +258,8 @@ impl Client {
             if page.dependencies.is_empty() {
                 break;
             }
-            deps.extend(page);
+            deps.dependencies.extend(page.dependencies);
+            deps.meta.total = page.meta.total;
         }
 
         Ok(deps)
@@ -242,68 +329,64 @@ impl Client {
     /// If false, only the data for the latest version will be fetched, if true,
     /// detailed information for all versions will be available.
     /// Note: Each version requires two extra requests.
-    pub fn full_crate(
-        &self,
-        name: &str,
-        all_versions: bool,
-    ) -> impl Future<Output = Result<FullCrate, Error>> {
-        let c = self.clone();
-        let name = String::from(name);
-        async move {
-            let krate = c.get_crate(&name).await?;
-            let versions = if !all_versions {
-                c.full_version(krate.versions[0].clone())
-                    .await
-                    .map(|v| vec![v])
-            } else {
-                try_join_all(
-                    krate
-                        .versions
-                        .clone()
-                        .into_iter()
-                        .map(|v| c.full_version(v)),
-                )
+    pub async fn full_crate(&self, name: &str, all_versions: bool) -> Result<FullCrate, Error> {
+        let krate = self.get_crate(name).await?;
+        let versions = if !all_versions {
+            self.full_version(krate.versions[0].clone())
                 .await
-            }?;
-            let dls_fut = c.crate_downloads(&name);
-            let owners_fut = c.crate_owners(&name);
-            let reverse_dependencies_fut = c.crate_reverse_dependencies(&name);
-            try_join!(dls_fut, owners_fut, reverse_dependencies_fut).map(
-                |(dls, owners, reverse_dependencies)| {
-                    let data = krate.crate_data;
-                    FullCrate {
-                        id: data.id,
-                        name: data.name,
-                        description: data.description,
-                        license: krate.versions[0].license.clone(),
-                        documentation: data.documentation,
-                        homepage: data.homepage,
-                        repository: data.repository,
-                        total_downloads: data.downloads,
-                        max_version: data.max_version,
-                        created_at: data.created_at,
-                        updated_at: data.updated_at,
-                        categories: krate.categories,
-                        keywords: krate.keywords,
-                        downloads: dls,
-                        owners,
-                        reverse_dependencies,
-                        versions,
-                    }
-                },
+                .map(|v| vec![v])
+        } else {
+            try_join_all(
+                krate
+                    .versions
+                    .clone()
+                    .into_iter()
+                    .map(|v| self.full_version(v)),
             )
-        }
+            .await
+        }?;
+        let dls_fut = self.crate_downloads(name);
+        let owners_fut = self.crate_owners(name);
+        let reverse_dependencies_fut = self.crate_reverse_dependencies(name);
+        try_join!(dls_fut, owners_fut, reverse_dependencies_fut).map(
+            |(dls, owners, reverse_dependencies)| {
+                let data = krate.crate_data;
+                FullCrate {
+                    id: data.id,
+                    name: data.name,
+                    description: data.description,
+                    license: krate.versions[0].license.clone(),
+                    documentation: data.documentation,
+                    homepage: data.homepage,
+                    repository: data.repository,
+                    total_downloads: data.downloads,
+                    max_version: data.max_version,
+                    created_at: data.created_at,
+                    updated_at: data.updated_at,
+                    categories: krate.categories,
+                    keywords: krate.keywords,
+                    downloads: dls,
+                    owners,
+                    reverse_dependencies,
+                    versions,
+                }
+            },
+        )
     }
 
     /// Retrieve a page of crates, optionally constrained by a query.
     ///
     /// If you want to get all results without worrying about paging,
     /// use [`all_crates`].
-    pub fn crates(&self, spec: ListOptions) -> impl Future<Output = Result<CratesResponse, Error>> {
+    pub async fn crates(&self, spec: ListOptions) -> Result<CratesResponse, Error> {
         let mut url = self.base_url.join("crates").unwrap();
         {
             let mut q = url.query_pairs_mut();
-            q.append_pair("page", &spec.page.to_string());
+
+            // If page is zero, bump it to one since pages start at 1.
+            let page = spec.page.max(1);
+
+            q.append_pair("page", &page.to_string());
             q.append_pair("per_page", &spec.per_page.to_string());
             q.append_pair("sort", spec.sort.to_str());
             if let Some(user_id) = spec.user_id {
@@ -313,57 +396,11 @@ impl Client {
                 q.append_pair("q", &query);
             }
         }
-        let c = self.clone();
-        async move { c.get(&url).await }
-    }
-    /// Retrieve all crates, optionally constrained by a query.
-    ///
-    /// Note: This method fetches all pages of the result.
-    /// This can result in a lot queries (100 results per query).
-    pub fn all_crates(&self, query: Option<String>) -> impl Stream<Item = Result<Crate, Error>> {
-        let opts = ListOptions {
-            query,
-            sort: Sort::Alphabetical,
-            per_page: 100,
-            page: 1,
-            user_id: None,
-        };
-
-        let c = self.clone();
-        c.crates(opts.clone())
-            .and_then(move |res| {
-                let pages = (res.meta.total as f64 / 100.0).ceil() as u64;
-                let streams_futures = (1..pages)
-                    .map(move |page| {
-                        let opts = ListOptions {
-                            page,
-                            ..opts.clone()
-                        };
-                        c.crates(opts).and_then(|res| {
-                            future::ok(stream::iter(res.crates.into_iter().map(Ok)))
-                        })
-                    })
-                    .collect::<Vec<_>>();
-                let stream = stream::FuturesOrdered::from_iter(streams_futures).try_flatten();
-                future::ok(stream)
-            })
-            .try_flatten_stream()
+        self.get(&url).await
     }
 
-    /// Retrieve all crates with all available extra information.
-    ///
-    /// Note: This method fetches not only all crates, but does multiple requests for each crate
-    /// to retrieve extra information.
-    ///
-    /// This can result in A LOT of queries.
-    pub fn all_crates_full(
-        &self,
-        query: Option<String>,
-        all_versions: bool,
-    ) -> impl Stream<Item = Result<FullCrate, Error>> {
-        let c = self.clone();
-        self.all_crates(query)
-            .and_then(move |cr| c.full_crate(&cr.name, all_versions))
+    pub fn crates_stream(&self, filter: ListOptions) -> CrateStream {
+        CrateStream::new(self.clone(), filter)
     }
 
     /// Retrieves a user by username.
@@ -386,7 +423,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_summary() -> Result<(), Error> {
+    async fn test_summary_async() -> Result<(), Error> {
         let client = build_test_client();
         let summary = client.summary().await?;
         assert!(summary.most_downloaded.len() > 0);
@@ -401,7 +438,22 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_full_crate() -> Result<(), Error> {
+    async fn test_crates_stream_async() {
+        let client = build_test_client();
+
+        let mut stream = client.crates_stream(ListOptions {
+            per_page: 10,
+            ..Default::default()
+        });
+
+        for _ in 0..40 {
+            let _krate = stream.next().await.unwrap().unwrap();
+            eprintln!("CRATE {}", _krate.name);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_full_crate_async() -> Result<(), Error> {
         let client = build_test_client();
         client.full_crate("crates_io_api", false).await?;
 
@@ -441,7 +493,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_crate_reverse_dependency_count() -> Result<(), Error> {
+    async fn test_crate_reverse_dependency_count_async() -> Result<(), Error> {
         let client = build_test_client();
         let count = client
             .crate_reverse_dependency_count("crates_io_api")
