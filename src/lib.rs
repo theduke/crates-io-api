@@ -50,7 +50,7 @@ mod types;
 
 pub use crate::{
     async_client::Client as AsyncClient,
-    error::{Error, NotFound},
+    error::{Error, NotFoundError, PermissionDeniedError},
     sync_client::SyncClient,
     types::*,
 };
