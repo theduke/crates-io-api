@@ -379,7 +379,7 @@ impl Client {
 }
 
 pub(crate) fn build_crate_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    let mut url = base.join("crates/")?;
+    let mut url = base.join("crates")?;
     url.path_segments_mut().unwrap().push(crate_name);
 
     // Guard against slashes in the crate name.
@@ -393,14 +393,29 @@ pub(crate) fn build_crate_url(base: &Url, crate_name: &str) -> Result<Url, Error
     }
 }
 
+fn build_crate_url_nested(base: &Url, crate_name: &str) -> Result<Url, Error> {
+    let mut url = base.join("crates")?;
+    url.path_segments_mut().unwrap().push(crate_name).push("/");
+
+    // Guard against slashes in the crate name.
+    // The API returns a nonsensical error in this case.
+    if crate_name.contains('/') {
+        Err(Error::NotFound(crate::error::NotFound {
+            url: url.to_string(),
+        }))
+    } else {
+        Ok(url)
+    }
+}
+
 pub(crate) fn build_crate_downloads_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    build_crate_url(base, crate_name)?
+    build_crate_url_nested(base, crate_name)?
         .join("downloads")
         .map_err(Error::from)
 }
 
 pub(crate) fn build_crate_owners_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    build_crate_url(base, crate_name)?
+    build_crate_url_nested(base, crate_name)?
         .join("owners")
         .map_err(Error::from)
 }
@@ -410,7 +425,7 @@ pub(crate) fn build_crate_reverse_deps_url(
     crate_name: &str,
     page: u64,
 ) -> Result<Url, Error> {
-    build_crate_url(base, crate_name)?
+    build_crate_url_nested(base, crate_name)?
         .join(&format!("reverse_dependencies?per_page=100&page={page}"))
         .map_err(Error::from)
 }
@@ -420,9 +435,8 @@ pub(crate) fn build_crate_authors_url(
     crate_name: &str,
     version: &str,
 ) -> Result<Url, Error> {
-    build_crate_url(base, crate_name)?
-        .join(version)?
-        .join("authors")
+    build_crate_url_nested(base, crate_name)?
+        .join(&format!("{version}/authors"))
         .map_err(Error::from)
 }
 
@@ -431,9 +445,8 @@ pub(crate) fn build_crate_dependencies_url(
     crate_name: &str,
     version: &str,
 ) -> Result<Url, Error> {
-    build_crate_url(base, crate_name)?
-        .join(version)?
-        .join("dependencies")
+    build_crate_url_nested(base, crate_name)?
+        .join(&format!("{version}/dependencies"))
         .map_err(Error::from)
 }
 
@@ -554,4 +567,15 @@ mod test {
         Ok(())
     }
 
+    /// Regression test for https://github.com/theduke/crates-io-api/issues/44
+    #[tokio::test]
+    async fn test_get_crate_with_slash() {
+        let client = build_test_client();
+        match client.get_crate("a/b").await {
+            Err(Error::NotFound(_)) => {}
+            other => {
+                panic!("Invalid response: expected NotFound error, got {:?}", other);
+            }
+        }
+    }
 }
