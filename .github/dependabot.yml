@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: daily
+    versioning-strategy: increase-if-necessary
+    ignore:
+      # Ignore patch releases.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
