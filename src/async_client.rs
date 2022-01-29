@@ -99,6 +99,8 @@ impl futures::stream::Stream for CrateStream {
 impl Client {
     /// Instantiate a new client.
     ///
+    /// Returns an [`Error`] if the given user agent is invalid.
+    ///
     /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
     /// you must specify both a descriptive user agent and a rate limit interval.
     ///
@@ -367,6 +369,7 @@ impl Client {
         self.get(&url).await
     }
 
+    /// Get a stream over all crates matching the given [`CratesQuery`].
     pub fn crates_stream(&self, filter: CratesQuery) -> CrateStream {
         CrateStream::new(self.clone(), filter)
     }

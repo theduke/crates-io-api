@@ -42,6 +42,7 @@
 //! ```
 
 #![recursion_limit = "128"]
+#![deny(missing_docs)]
 
 mod async_client;
 mod error;

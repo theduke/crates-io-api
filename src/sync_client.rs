@@ -18,6 +18,8 @@ pub struct SyncClient {
 impl SyncClient {
     /// Instantiate a new client.
     ///
+    /// Returns an [`Error`] if the given user agent is invalid.
+    ///
     /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
     /// you must specify both a descriptive user agent and a rate limit interval.
     ///
