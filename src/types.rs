@@ -7,12 +7,14 @@ use std::collections::HashMap;
 /// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ApiErrors {
+    /// Individual errors.
     pub errors: Vec<ApiError>,
 }
 
 /// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ApiError {
+    /// Error message.
     pub detail: Option<String>,
 }
 
@@ -102,6 +104,7 @@ impl CratesQuery {
 }
 
 impl CratesQuery {
+    /// Construct a new [`CratesQueryBuilder`].
     pub fn builder() -> CratesQueryBuilder {
         CratesQueryBuilder::new()
     }
@@ -180,6 +183,7 @@ impl Default for CratesQuery {
     }
 }
 
+/// Builder that enables easy construction of a [`CratesQuery`].
 pub struct CratesQueryBuilder {
     query: CratesQuery,
 }
@@ -251,7 +255,9 @@ pub struct Meta {
     pub total: u64,
 }
 
+/// Links to individual API endpoints that provide crate details.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct CrateLinks {
     pub owner_team: String,
     pub owner_user: String,
@@ -261,7 +267,9 @@ pub struct CrateLinks {
     pub versions: Option<String>,
 }
 
+/// A Rust crate published to crates.io.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Crate {
     pub id: String,
     pub name: String,
@@ -286,6 +294,7 @@ pub struct Crate {
     pub exact_match: Option<bool>,
 }
 
+/// Full data for a crate listing.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct CratesPage {
@@ -299,7 +308,9 @@ pub struct CratesPage {
     pub meta: Meta,
 }
 
+/// Links to API endpoints providing extra data for a crate version.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct VersionLinks {
     #[deprecated(
         since = "0.7.1",
@@ -311,7 +322,9 @@ pub struct VersionLinks {
     pub version_downloads: String,
 }
 
+/// A [`Crate`] version.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Version {
     #[serde(rename = "crate")]
     pub crate_name: String,
@@ -330,7 +343,9 @@ pub struct Version {
     pub published_by: Option<User>,
 }
 
+/// A crate category.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Category {
     pub category: String,
     pub crates_cnt: u64,
@@ -340,7 +355,9 @@ pub struct Category {
     pub slug: String,
 }
 
+/// A keyword available on crates.io.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Keyword {
     pub id: String,
     pub keyword: String,
@@ -348,7 +365,9 @@ pub struct Keyword {
     pub created_at: DateTime<Utc>,
 }
 
+/// Full data for a crate.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct CrateResponse {
     pub categories: Vec<Category>,
     #[serde(rename = "crate")]
@@ -357,7 +376,9 @@ pub struct CrateResponse {
     pub versions: Vec<Version>,
 }
 
+/// Summary for crates.io.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Summary {
     pub just_updated: Vec<Crate>,
     pub most_downloaded: Vec<Crate>,
@@ -369,31 +390,42 @@ pub struct Summary {
     pub popular_keywords: Vec<Keyword>,
 }
 
+/// Download data for a single crate version.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct VersionDownloads {
     pub date: NaiveDate,
     pub downloads: u64,
     pub version: u64,
 }
 
+/// Crate downloads that don't fit a particular date.
+/// Only required for old download data.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct ExtraDownloads {
     pub date: NaiveDate,
     pub downloads: u64,
 }
 
+/// Additional data for crate downloads.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct CrateDownloadsMeta {
     pub extra_downloads: Vec<ExtraDownloads>,
 }
 
+/// Download data for all versions of a [`Crate`].
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct CrateDownloads {
     pub version_downloads: Vec<VersionDownloads>,
     pub meta: CrateDownloadsMeta,
 }
 
+/// A crates.io user.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct User {
     pub avatar: Option<String>,
     pub email: Option<String>,
@@ -404,26 +436,37 @@ pub struct User {
     pub url: String,
 }
 
+/// Additional crate author metadata.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct AuthorsMeta {
     pub names: Vec<String>,
 }
 
+/// API Response for authors data.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub(crate) struct AuthorsResponse {
     pub meta: AuthorsMeta,
 }
 
+/// Crate author names.
+#[allow(missing_docs)]
 pub struct Authors {
     pub names: Vec<String>,
 }
 
+/// Crate owners.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Owners {
     pub users: Vec<User>,
 }
 
+/// A crate dependency.
+/// Specifies the crate and features.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Dependency {
     pub crate_id: String,
     pub default_features: bool,
@@ -437,12 +480,16 @@ pub struct Dependency {
     pub version_id: u64,
 }
 
+/// List of dependencies of a crate.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Dependencies {
     pub dependencies: Vec<Dependency>,
 }
 
+/// Single reverse dependency (aka a dependent) of a crate.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct ReverseDependency {
     pub crate_version: Version,
     pub dependency: Dependency,
@@ -456,8 +503,9 @@ pub(super) struct ReverseDependenciesAsReceived {
     pub meta: Meta,
 }
 
-// This is how reverse dependencies are presented
+/// Full list of reverse dependencies for a crate (version).
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct ReverseDependencies {
     pub dependencies: Vec<ReverseDependency>,
     pub meta: Meta,
@@ -483,7 +531,9 @@ impl ReverseDependencies {
     }
 }
 
+/// Complete information for a crate version.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct FullVersion {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -501,7 +551,9 @@ pub struct FullVersion {
     pub dependencies: Vec<Dependency>,
 }
 
+/// Complete information for a crate.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
 pub struct FullCrate {
     pub id: String,
     pub name: String,
