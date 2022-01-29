@@ -265,7 +265,7 @@ pub struct ReverseDependencies {
 
 impl ReverseDependencies {
     /// Fills the dependencies field from a ReverseDependenciesAsReceived struct.
-    pub(crate) fn from_received(&mut self, rdeps: &ReverseDependenciesAsReceived) {
+    pub(crate) fn add_reverse_deps(&mut self, rdeps: &ReverseDependenciesAsReceived) {
         for d in rdeps.dependencies.iter() {
             for v in rdeps.versions.iter() {
                 if v.id == d.version_id {
