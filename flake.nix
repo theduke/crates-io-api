@@ -26,7 +26,6 @@
             installPhase = "";
 
             RUST_BACKTRACE = "1";
-            RUSTFLAGS = "-C link-arg=-fuse-ld=lld";
             LD_LIBRARY_PATH = "${pkgs.openssl.out}/lib";
         };
 
