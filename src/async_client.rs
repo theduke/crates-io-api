@@ -209,7 +209,7 @@ impl Client {
 
     /// Get a single page of reverse dependencies.
     ///
-    /// Note: page must be >= 1.
+    /// Note: if the page is 0, it is coerced to 1.
     pub async fn crate_reverse_dependencies_page(
         &self,
         crate_name: &str,
