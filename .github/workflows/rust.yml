@@ -20,7 +20,7 @@ jobs:
       run: cargo fmt --check
 
     - name: Lint
-      run: cargo clippy -D warnings --verbose
+      run: cargo clippy -- --deny warnings
 
     - name: Test
       run: cargo test
