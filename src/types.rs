@@ -274,6 +274,10 @@ pub struct Crate {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
+    // FIXME: Remove on next breaking version bump.
+    #[deprecated(
+        note = "This field is always empty. The license is only available on a specific `Version` of a crate or on `FullCrate`. This field will be removed in the next minor version bump."
+    )]
     pub license: Option<String>,
     pub documentation: Option<String>,
     pub homepage: Option<String>,
