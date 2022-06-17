@@ -1,6 +1,6 @@
 //! Types for the data that is available via the API.
 
-use chrono::{DateTime, NaiveDate, Utc};
+use time::{OffsetDateTime, Date};
 use serde_derive::*;
 use std::collections::HashMap;
 
@@ -293,8 +293,10 @@ pub struct Crate {
     pub versions: Option<Vec<u64>>,
     pub max_version: String,
     pub links: CrateLinks,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
     pub exact_match: Option<bool>,
 }
 
@@ -316,12 +318,6 @@ pub struct CratesPage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct VersionLinks {
-    #[deprecated(
-        since = "0.7.1",
-        note = "This field was removed from the API and will always be empty. Will be removed in 0.8.0."
-    )]
-    #[serde(default)]
-    pub authors: String,
     pub dependencies: String,
     pub version_downloads: String,
 }
@@ -332,8 +328,10 @@ pub struct VersionLinks {
 pub struct Version {
     #[serde(rename = "crate")]
     pub crate_name: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
     pub dl_path: String,
     pub downloads: u64,
     pub features: HashMap<String, Vec<String>>,
@@ -353,7 +351,8 @@ pub struct Version {
 pub struct Category {
     pub category: String,
     pub crates_cnt: u64,
-    pub created_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
     pub description: String,
     pub id: String,
     pub slug: String,
@@ -366,7 +365,8 @@ pub struct Keyword {
     pub id: String,
     pub keyword: String,
     pub crates_cnt: u64,
-    pub created_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
 }
 
 /// Full data for a crate.
@@ -398,7 +398,7 @@ pub struct Summary {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct VersionDownloads {
-    pub date: NaiveDate,
+    pub date: Date,
     pub downloads: u64,
     pub version: u64,
 }
@@ -408,7 +408,7 @@ pub struct VersionDownloads {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct ExtraDownloads {
-    pub date: NaiveDate,
+    pub date: Date,
     pub downloads: u64,
 }
 
@@ -539,8 +539,10 @@ impl ReverseDependencies {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct FullVersion {
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
     pub dl_path: String,
     pub downloads: u64,
     pub features: HashMap<String, Vec<String>>,
@@ -568,8 +570,10 @@ pub struct FullCrate {
     pub repository: Option<String>,
     pub total_downloads: u64,
     pub max_version: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
 
     pub categories: Vec<Category>,
     pub keywords: Vec<Keyword>,

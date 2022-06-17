@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.9.0 - 2022-06-17
+
+This version replaces the `chrono` dependency with `time`. The current version of the `chrono` crate *(v0.4.19)* depends on an old version of the `time` crate *(v0.1.43)* that can segfault under certain conditions. Since `chrono` is currently unmaintained, it has been replaced with a version of the `time` crate *(v0.3.9)* that does not expose users to possible segfaults.
+
+### (Breaking) Changes
+
+* Error
+  - make Error #[non_exhaustive]
+  - add Error::Api variant
+  - Rename NotFound => NotFoundError
+  - Rename PermissionDenied => PermissionDeniedError
+  - Remove InvalidHeaders variant (only relevant for client construction)
+
+* Types
+  - Change type of `Crate::created_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `Crate::updated_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `Version::created_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `Version::updated_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `Category::created_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `Keyword::created_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `VersionDownloads::date` from `chrono::NaiveDate` to `time::Date`
+  - Change type of `ExtraDownloads::date` from `chrono::NaiveDate` to `time::Date`
+  - Change type of `FullVersion::created_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `FullVersion::updated_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `FullCrate::created_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Change type of `FullCrate::updated_at` from `chrono::DateTime<Utc>` to `time::OffsetDateTime`
+  - Remove unused `authors` field from `VersionLinks`
+
 ## 0.8.0 - 2022-01-29
 
 This version has quite a few breaking changes, 
