@@ -1,8 +1,8 @@
 //! Types for the data that is available via the API.
 
-use time::{OffsetDateTime, Date};
 use serde_derive::*;
 use std::collections::HashMap;
+use time::{Date, OffsetDateTime};
 
 /// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
