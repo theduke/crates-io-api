@@ -134,14 +134,26 @@ impl Client {
             .build()
             .unwrap();
 
+        Ok(Self::with_http_client(client, rate_limit))
+    }
+
+    /// Instantiate a new client.
+    ///
+    /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
+    /// you must specify both a descriptive user agent and a rate limit interval.
+    ///
+    /// At most one request will be executed in the specified duration.
+    /// The guidelines suggest 1 per second or less.
+    /// (Only one request is executed concurrenly, even if the given Duration is 0).
+    pub fn with_http_client(client: HttpClient, rate_limit: std::time::Duration) -> Self {
         let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
 
-        Ok(Self {
+        Self {
             rate_limit,
             last_request_time: limiter,
             client,
             base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
-        })
+        }
     }
 
     async fn get<T: DeserializeOwned>(&self, url: &Url) -> Result<T, Error> {
