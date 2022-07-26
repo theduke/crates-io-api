@@ -292,6 +292,7 @@ pub struct Crate {
     pub keywords: Option<Vec<String>>,
     pub versions: Option<Vec<u64>>,
     pub max_version: String,
+    pub max_stable_version: String,
     pub links: CrateLinks,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -568,6 +569,7 @@ pub struct FullCrate {
     pub repository: Option<String>,
     pub total_downloads: u64,
     pub max_version: String,
+    pub max_stable_version: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
