@@ -261,6 +261,7 @@ impl SyncClient {
             repository: data.repository,
             total_downloads: data.downloads,
             max_version: data.max_version,
+            max_stable_version: data.max_stable_version,
             created_at: data.created_at,
             updated_at: data.updated_at,
 
