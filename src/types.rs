@@ -28,13 +28,6 @@ impl std::fmt::Display for ApiError {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
-#[serde(untagged)]
-pub(crate) enum ApiResponse<T> {
-    Err(ApiErrors),
-    Ok(T),
-}
-
 /// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Sort {
@@ -292,7 +285,7 @@ pub struct Crate {
     pub keywords: Option<Vec<String>>,
     pub versions: Option<Vec<u64>>,
     pub max_version: String,
-    pub max_stable_version: String,
+    pub max_stable_version: Option<String>,
     pub links: CrateLinks,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -569,7 +562,7 @@ pub struct FullCrate {
     pub repository: Option<String>,
     pub total_downloads: u64,
     pub max_version: String,
-    pub max_stable_version: String,
+    pub max_stable_version: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 

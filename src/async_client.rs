@@ -7,6 +7,7 @@ use serde::de::DeserializeOwned;
 use std::collections::VecDeque;
 
 use super::Error;
+use crate::error::JsonDecodeError;
 use crate::types::*;
 
 /// Asynchronous client for the crates.io API.
@@ -168,28 +169,38 @@ impl Client {
         let time = tokio::time::Instant::now();
         let res = self.client.get(url.clone()).send().await?;
 
-        let result = match res.status() {
-            StatusCode::NOT_FOUND => Err(Error::NotFound(super::error::NotFoundError {
-                url: url.to_string(),
-            })),
-            StatusCode::FORBIDDEN => {
-                let reason = res.text().await.unwrap_or_default();
-                Err(Error::PermissionDenied(
-                    super::error::PermissionDeniedError { reason },
-                ))
-            }
-            _ if !res.status().is_success() => {
-                Err(Error::from(res.error_for_status().unwrap_err()))
-            }
-            _ => res.json::<ApiResponse<T>>().await.map_err(Error::from),
-        };
+        if !res.status().is_success() {
+            let err = match res.status() {
+                StatusCode::NOT_FOUND => Error::NotFound(super::error::NotFoundError {
+                    url: url.to_string(),
+                }),
+                StatusCode::FORBIDDEN => {
+                    let reason = res.text().await.unwrap_or_default();
+                    Error::PermissionDenied(super::error::PermissionDeniedError { reason })
+                }
+                _ => Error::from(res.error_for_status().unwrap_err()),
+            };
 
+            return Err(err);
+        }
+
+        let content = res.text().await?;
+
+        // Free up the lock
         (*lock) = Some(time);
 
-        match result? {
-            ApiResponse::Ok(t) => Ok(t),
-            ApiResponse::Err(err) => Err(Error::Api(err)),
+        // First, check for api errors.
+
+        if let Ok(errors) = serde_json::from_str::<ApiErrors>(&content) {
+            return Err(Error::Api(errors));
         }
+
+        let jd = &mut serde_json::Deserializer::from_str(&content);
+        serde_path_to_error::deserialize::<_, T>(jd).map_err(|err| {
+            Error::JsonDecode(JsonDecodeError {
+                message: format!("Could not decode JSON: {err} (path: {})", err.path()),
+            })
+        })
     }
 
     /// Retrieve a summary containing crates.io wide information.
