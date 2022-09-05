@@ -12,6 +12,8 @@ pub enum Error {
     NotFound(NotFoundError),
     /// No permission to access the resource.
     PermissionDenied(PermissionDeniedError),
+    /// JSON decoding of API response failed.
+    JsonDecode(JsonDecodeError),
     /// Error returned by the crates.io API directly.
     Api(crate::types::ApiErrors),
 }
@@ -36,6 +38,7 @@ impl std::fmt::Display for Error {
 
                 write!(f, "API Error ({})", inner)
             }
+            Error::JsonDecode(err) => write!(f, "Could not decode API JSON response: {err}"),
         }
     }
 }
@@ -48,6 +51,7 @@ impl std::error::Error for Error {
             Error::NotFound(_) => None,
             Error::PermissionDenied(_) => None,
             Error::Api(_) => None,
+            Error::JsonDecode(err) => Some(err),
         }
     }
 
@@ -75,6 +79,20 @@ impl From<url::ParseError> for Error {
         Error::Url(e)
     }
 }
+
+/// Error returned when the JSON returned by the API could not be decoded.
+#[derive(Debug)]
+pub struct JsonDecodeError {
+    pub(crate) message: String,
+}
+
+impl std::fmt::Display for JsonDecodeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Could not decode JSON: {}", self.message)
+    }
+}
+
+impl std::error::Error for JsonDecodeError {}
 
 /// Error returned when a resource could not be found.
 #[derive(Debug)]
