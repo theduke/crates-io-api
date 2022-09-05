@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+* Add `AsyncClient::with_http_client` constructor
+* Add `Crate::max_stable_version` field
+* Improve error reporting for JSON decoding errors
+
 ## 0.8.0 - 2022-01-29
 
 This version has quite a few breaking changes, 
