@@ -5,6 +5,8 @@
 * Add `AsyncClient::with_http_client` constructor
 * Add `Crate::max_stable_version` field
 * Improve error reporting for JSON decoding errors
+* Deprecate the `Crate::license field`
+  (field is unused and always empty)
 
 ## 0.8.0 - 2022-01-29
 
