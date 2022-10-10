@@ -8,6 +8,7 @@
 
 ### (Breaking) Changes
 
+* `AsyncClient::with_http_client()` now requires the crate registry url to be specified.
 * Types, make field optional: User {url}
 
 ## 0.8.1
