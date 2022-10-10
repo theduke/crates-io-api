@@ -116,12 +116,36 @@ impl Client {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
-    ///   None,
     /// ).unwrap();
     /// # Ok(())
     /// # }
     /// ```
     pub fn new(
+        user_agent: &str,
+        rate_limit: std::time::Duration,
+    ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
+        Self::build(user_agent, rate_limit, None)
+    }
+
+    /// Build a new client.
+    ///
+    /// Returns an [`Error`] if the given user agent is invalid.
+    /// ```rust
+    /// use crates_io_api::{AsyncClient,Registry};
+    /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = crates_io_api::AsyncClient::build(
+    ///   "my_bot (help@my_bot.com)",
+    ///   std::time::Duration::from_millis(1000),
+    ///   Some(&Registry{
+    ///     url: "https://crates.my-registry.com/api/v1/".to_string(),
+    ///     name: Some("my_registry".to_string()),
+    ///     token: None,
+    ///     }),
+    /// ).unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn build(
         user_agent: &str,
         rate_limit: std::time::Duration,
         registry: Option<&Registry>,
@@ -489,7 +513,6 @@ mod test {
         Client::new(
             "crates-io-api-continuous-integration (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
-            None,
         )
         .unwrap()
     }

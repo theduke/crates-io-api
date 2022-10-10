@@ -33,12 +33,33 @@ impl SyncClient {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
-    ///   None,
     /// ).unwrap();
     /// # Ok(())
     /// # }
     /// ```
     pub fn new(
+        user_agent: &str,
+        rate_limit: std::time::Duration,
+    ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
+        Self::build(user_agent, rate_limit, None)
+    }
+
+    /// ```rust
+    /// use crates_io_api::{SyncClient,Registry};
+    /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = crates_io_api::SyncClient::build(
+    ///   "my_bot (help@my_bot.com)",
+    ///   std::time::Duration::from_millis(1000),
+    ///   Some(&Registry{
+    ///     url: "https://crates.my-registry.com/api/v1/".to_string(),
+    ///     name: Some("my_registry".to_string()),
+    ///     token: None,
+    ///     }),
+    ///  ).unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn build(
         user_agent: &str,
         rate_limit: std::time::Duration,
         registry: Option<&Registry>,
@@ -301,7 +322,6 @@ impl SyncClient {
     /// # let client = SyncClient::new(
     /// #     "my-bot-name (my-contact@domain.com)",
     /// #     std::time::Duration::from_millis(1000),
-    /// #     None,
     /// # ).unwrap();
     /// let q = CratesQuery::builder()
     ///   .sort(Sort::Alphabetical)
@@ -334,7 +354,6 @@ mod test {
         SyncClient::new(
             "crates-io-api-ci (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
-            None,
         )
         .unwrap()
     }

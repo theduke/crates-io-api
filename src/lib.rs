@@ -25,7 +25,6 @@
 //!     let client = SyncClient::new(
 //!          "my-user-agent (my-contact@domain.com)",
 //!          std::time::Duration::from_millis(1000),
-//!          None,
 //!     ).unwrap();
 //!     // Retrieve summary data.
 //!     let summary = client.summary()?;
@@ -48,11 +47,6 @@
 //! let client = SyncClient::new(
 //!          "my-user-agent (my-contact@domain.com)",
 //!          std::time::Duration::from_millis(1000),
-//!          Some(&Registry{
-//!             url: "https://crates.my-registry.com/api/v1/".to_string(),
-//!             name: Some("my_registry".to_string()),
-//!             token: None,
-//!             }),
 //!     ).unwrap();
 //! ```
 

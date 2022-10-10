@@ -1,7 +1,7 @@
 //! Helper functions for querying crate registries
 //!
 //!
-use crate::{error::Error, types::*};
+use crate::types::*;
 
 use reqwest::header;
 use std::env;
@@ -17,8 +17,8 @@ pub fn setup_headers(
         header::HeaderValue::from_str(user_agent)?,
     );
 
-    if registry.is_some() {
-        match &registry.unwrap().name {
+    match &registry {
+        Some(registry) => match &registry.name {
             Some(name) => {
                 match env::var(format!("CARGO_REGISTRIES_{}_TOKEN", name.to_uppercase())) {
                     Ok(foo) => {
@@ -28,7 +28,7 @@ pub fn setup_headers(
                     _ => (),
                 }
             }
-            None => match &registry.unwrap().token {
+            None => match &registry.token {
                 Some(token) => {
                     headers.insert(
                         header::AUTHORIZATION,
@@ -37,8 +37,10 @@ pub fn setup_headers(
                 }
                 None => (),
             },
-        }
+        },
+        None => (),
     }
+
     Ok(headers)
 }
 
@@ -53,6 +55,7 @@ pub fn base_url(registry: Option<&Registry>) -> &str {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::Error;
 
     #[test]
     fn test_base_url_default() -> Result<(), Error> {
