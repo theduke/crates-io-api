@@ -1,14 +1,14 @@
 use futures::future::BoxFuture;
 use futures::prelude::*;
 use futures::{future::try_join_all, try_join};
-use reqwest::{header, Client as HttpClient, StatusCode, Url};
+use reqwest::{Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use std::collections::VecDeque;
 
 use super::Error;
 use crate::error::JsonDecodeError;
-use crate::types::*;
+use crate::{helper::*, types::*};
 
 /// Asynchronous client for the crates.io API.
 #[derive(Clone)]
@@ -116,6 +116,7 @@ impl Client {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
+    ///   None,
     /// ).unwrap();
     /// # Ok(())
     /// # }
@@ -123,19 +124,16 @@ impl Client {
     pub fn new(
         user_agent: &str,
         rate_limit: std::time::Duration,
+        registry: Option<&Registry>,
     ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
-        let mut headers = header::HeaderMap::new();
-        headers.insert(
-            header::USER_AGENT,
-            header::HeaderValue::from_str(user_agent)?,
-        );
+        let headers = setup_headers(user_agent, registry)?;
 
         let client = HttpClient::builder()
             .default_headers(headers)
             .build()
             .unwrap();
 
-        Ok(Self::with_http_client(client, rate_limit))
+        Ok(Self::with_http_client(client, rate_limit, registry))
     }
 
     /// Instantiate a new client.
@@ -146,14 +144,20 @@ impl Client {
     /// At most one request will be executed in the specified duration.
     /// The guidelines suggest 1 per second or less.
     /// (Only one request is executed concurrenly, even if the given Duration is 0).
-    pub fn with_http_client(client: HttpClient, rate_limit: std::time::Duration) -> Self {
+    pub fn with_http_client(
+        client: HttpClient,
+        rate_limit: std::time::Duration,
+        registry: Option<&Registry>,
+    ) -> Self {
         let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
+
+        let base_url = base_url(registry);
 
         Self {
             rate_limit,
             last_request_time: limiter,
             client,
-            base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
+            base_url: Url::parse(base_url).unwrap(),
         }
     }
 
@@ -485,6 +489,7 @@ mod test {
         Client::new(
             "crates-io-api-continuous-integration (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
+            None,
         )
         .unwrap()
     }

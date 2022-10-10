@@ -2,10 +2,10 @@ use super::*;
 use std::iter::Extend;
 
 use log::trace;
-use reqwest::{blocking::Client as HttpClient, header, StatusCode, Url};
+use reqwest::{blocking::Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
-use crate::{error::JsonDecodeError, types::*};
+use crate::{error::JsonDecodeError, helper::*, types::*};
 
 /// A synchronous client for the crates.io API.
 pub struct SyncClient {
@@ -33,6 +33,7 @@ impl SyncClient {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
+    ///   None,
     /// ).unwrap();
     /// # Ok(())
     /// # }
@@ -40,19 +41,17 @@ impl SyncClient {
     pub fn new(
         user_agent: &str,
         rate_limit: std::time::Duration,
+        registry: Option<&Registry>,
     ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
-        let mut headers = header::HeaderMap::new();
-        headers.insert(
-            header::USER_AGENT,
-            header::HeaderValue::from_str(user_agent)?,
-        );
+        let headers = setup_headers(user_agent, registry)?;
+        let base_url = base_url(registry);
 
         Ok(Self {
             client: HttpClient::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
-            base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
+            base_url: Url::parse(base_url).unwrap(),
             rate_limit,
             last_request_time: std::sync::Mutex::new(None),
         })
@@ -302,6 +301,7 @@ impl SyncClient {
     /// # let client = SyncClient::new(
     /// #     "my-bot-name (my-contact@domain.com)",
     /// #     std::time::Duration::from_millis(1000),
+    /// #     None,
     /// # ).unwrap();
     /// let q = CratesQuery::builder()
     ///   .sort(Sort::Alphabetical)
@@ -334,6 +334,7 @@ mod test {
         SyncClient::new(
             "crates-io-api-ci (github.com/theduke/crates-io-api)",
             std::time::Duration::from_millis(1000),
+            None,
         )
         .unwrap()
     }

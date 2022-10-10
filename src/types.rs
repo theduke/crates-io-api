@@ -4,6 +4,16 @@ use chrono::{DateTime, NaiveDate, Utc};
 use serde_derive::*;
 use std::collections::HashMap;
 
+/// Used to specify the registry being queried by either client.
+pub struct Registry {
+    /// Url of the registry
+    pub url: String,
+    /// Name of the registry
+    pub name: Option<String>,
+    /// Token used to authenticate registry requests.
+    pub token: Option<String>,
+}
+
 /// Used to specify the sort behaviour of the `Client::crates()` method.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ApiErrors {
@@ -432,7 +442,7 @@ pub struct User {
     pub kind: Option<String>,
     pub login: String,
     pub name: Option<String>,
-    pub url: String,
+    pub url: Option<String>,
 }
 
 /// Additional crate author metadata.

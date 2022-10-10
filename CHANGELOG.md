@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.0
+
+This version has a breaking change to support specifying alternative crate registries.
+
+### Features
+
+* Query registries other than crates-io
+
+### (Breaking) Changes
+
+* `AsyncClient` and `SyncClient` take an `Option(&Registry)`
+* Types, make field optional: User {url}
+
 ## 0.8.1
 
 * Add `AsyncClient::with_http_client` constructor
@@ -10,7 +23,7 @@
 
 ## 0.8.0 - 2022-01-29
 
-This version has quite a few breaking changes, 
+This version has quite a few breaking changes,
 mainly to clean up and future-proof the API.
 
 ### Features
@@ -95,7 +108,7 @@ mainly to clean up and future-proof the API.
   * Crate {recent_downloads, exact_match}
   * CrateResponse {versions, keywords, categories}
   * Version {crate_size, published_by}
-* Make field optional: User {kind} 
+* Make field optional: User {kind}
 * Fix getting the reverse dependencies.
   * Rearrange the received data for simpler manipulation.
   * Add 3 new types:
