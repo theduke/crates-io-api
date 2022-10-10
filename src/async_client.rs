@@ -157,7 +157,9 @@ impl Client {
             .build()
             .unwrap();
 
-        Ok(Self::with_http_client(client, rate_limit, registry))
+        let base_url = base_url(registry);
+
+        Ok(Self::with_http_client(client, rate_limit, base_url))
     }
 
     /// Instantiate a new client.
@@ -171,11 +173,9 @@ impl Client {
     pub fn with_http_client(
         client: HttpClient,
         rate_limit: std::time::Duration,
-        registry: Option<&Registry>,
+        base_url: &str,
     ) -> Self {
         let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
-
-        let base_url = base_url(registry);
 
         Self {
             rate_limit,

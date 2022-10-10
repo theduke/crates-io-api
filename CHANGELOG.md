@@ -1,16 +1,13 @@
 # Changelog
 
-## 0.9.0
-
-This version has a breaking change to support specifying alternative crate registries.
-
 ### Features
 
 * Query registries other than crates-io
+  - Additional `AsyncClient::build()` and `SyncClient::build()` functions.
+    For building a client for an alternative registry.
 
 ### (Breaking) Changes
 
-* `AsyncClient` and `SyncClient` take an `Option(&Registry)`
 * Types, make field optional: User {url}
 
 ## 0.8.1
