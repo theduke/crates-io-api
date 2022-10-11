@@ -162,7 +162,7 @@ impl Client {
         Ok(Self::with_http_client(client, rate_limit, base_url))
     }
 
-    /// Instantiate a new client.
+    /// Instantiate a new client, for the registry sepcified by base_url.
     ///
     /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
     /// you must specify both a descriptive user agent and a rate limit interval.
