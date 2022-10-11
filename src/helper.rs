@@ -1,8 +1,6 @@
 //! Helper functions for querying crate registries
-//!
-//!
-use crate::types::*;
 
+use crate::types::*;
 use reqwest::header;
 use std::env;
 
@@ -20,20 +18,18 @@ pub fn setup_headers(
     match &registry {
         Some(registry) => match &registry.name {
             Some(name) => {
-                match env::var(format!("CARGO_REGISTRIES_{}_TOKEN", name.to_uppercase())) {
-                    Ok(foo) => {
-                        headers.insert(header::AUTHORIZATION, header::HeaderValue::from_str(&foo)?);
-                        ()
-                    }
-                    _ => (),
-                }
-            }
-            None => match &registry.token {
-                Some(token) => {
+                if let Ok(token) =
+                    env::var(format!("CARGO_REGISTRIES_{}_TOKEN", name.to_uppercase()))
+                {
                     headers.insert(
                         header::AUTHORIZATION,
                         header::HeaderValue::from_str(&token)?,
                     );
+                }
+            }
+            None => match &registry.token {
+                Some(token) => {
+                    headers.insert(header::AUTHORIZATION, header::HeaderValue::from_str(token)?);
                 }
                 None => (),
             },
