@@ -197,6 +197,13 @@ impl CratesQueryBuilder {
         self
     }
 
+    /// Set the page.
+    #[must_use]
+    pub fn page(mut self, page: u64) -> Self {
+        self.query.page = page;
+        self
+    }
+
     /// Set the page size.
     #[must_use]
     pub fn page_size(mut self, size: u64) -> Self {
