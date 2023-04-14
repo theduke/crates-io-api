@@ -562,6 +562,7 @@ pub struct FullCrate {
     pub homepage: Option<String>,
     pub repository: Option<String>,
     pub total_downloads: u64,
+    pub recent_downloads: Option<u64>,
     pub max_version: String,
     pub max_stable_version: Option<String>,
     pub created_at: DateTime<Utc>,
