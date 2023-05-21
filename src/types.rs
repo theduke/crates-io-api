@@ -450,6 +450,7 @@ pub(crate) struct AuthorsResponse {
 }
 
 /// Crate author names.
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct Authors {
     pub names: Vec<String>,
