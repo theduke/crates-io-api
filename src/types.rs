@@ -49,7 +49,7 @@ impl Sort {
     pub(crate) fn to_str(&self) -> &str {
         match self {
             Self::Alphabetical => "alpha",
-            Self::Relevance => "",
+            Self::Relevance => "relevance",
             Self::Downloads => "downloads",
             Self::RecentDownloads => "recent-downloads",
             Self::RecentUpdates => "recent-updates",
