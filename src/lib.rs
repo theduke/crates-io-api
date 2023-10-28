@@ -40,18 +40,29 @@
 //!     Ok(())
 //! }
 //! ```
+//! Instantiate a client for a private registry with environment variable authentication
+//!
+//! ```rust
+//! use crates_io_api::{SyncClient,Registry};
+//! let client = SyncClient::new(
+//!          "my-user-agent (my-contact@domain.com)",
+//!          std::time::Duration::from_millis(1000),
+//!     ).unwrap();
+//! ```
 
 #![recursion_limit = "128"]
 #![deny(missing_docs)]
 
 mod async_client;
 mod error;
+mod helper;
 mod sync_client;
 mod types;
 
 pub use crate::{
     async_client::Client as AsyncClient,
     error::{Error, NotFoundError, PermissionDeniedError},
+    helper::*,
     sync_client::SyncClient,
     types::*,
 };

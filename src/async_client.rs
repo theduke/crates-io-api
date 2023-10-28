@@ -1,14 +1,14 @@
 use futures::future::BoxFuture;
 use futures::prelude::*;
 use futures::{future::try_join_all, try_join};
-use reqwest::{header, Client as HttpClient, StatusCode, Url};
+use reqwest::{Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use std::collections::VecDeque;
 
 use super::Error;
 use crate::error::JsonDecodeError;
-use crate::types::*;
+use crate::{helper::*, types::*};
 
 /// Asynchronous client for the crates.io API.
 #[derive(Clone)]
@@ -124,21 +124,45 @@ impl Client {
         user_agent: &str,
         rate_limit: std::time::Duration,
     ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
-        let mut headers = header::HeaderMap::new();
-        headers.insert(
-            header::USER_AGENT,
-            header::HeaderValue::from_str(user_agent)?,
-        );
+        Self::build(user_agent, rate_limit, None)
+    }
+
+    /// Build a new client.
+    ///
+    /// Returns an [`Error`] if the given user agent is invalid.
+    /// ```rust
+    /// use crates_io_api::{AsyncClient,Registry};
+    /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = crates_io_api::AsyncClient::build(
+    ///   "my_bot (help@my_bot.com)",
+    ///   std::time::Duration::from_millis(1000),
+    ///   Some(&Registry{
+    ///     url: "https://crates.my-registry.com/api/v1/".to_string(),
+    ///     name: Some("my_registry".to_string()),
+    ///     token: None,
+    ///     }),
+    /// ).unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn build(
+        user_agent: &str,
+        rate_limit: std::time::Duration,
+        registry: Option<&Registry>,
+    ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
+        let headers = setup_headers(user_agent, registry)?;
 
         let client = HttpClient::builder()
             .default_headers(headers)
             .build()
             .unwrap();
 
-        Ok(Self::with_http_client(client, rate_limit))
+        let base_url = base_url(registry);
+
+        Ok(Self::with_http_client(client, rate_limit, base_url))
     }
 
-    /// Instantiate a new client.
+    /// Instantiate a new client, for the registry sepcified by base_url.
     ///
     /// To respect the offical [Crawler Policy](https://crates.io/policies#crawlers),
     /// you must specify both a descriptive user agent and a rate limit interval.
@@ -146,14 +170,18 @@ impl Client {
     /// At most one request will be executed in the specified duration.
     /// The guidelines suggest 1 per second or less.
     /// (Only one request is executed concurrenly, even if the given Duration is 0).
-    pub fn with_http_client(client: HttpClient, rate_limit: std::time::Duration) -> Self {
+    pub fn with_http_client(
+        client: HttpClient,
+        rate_limit: std::time::Duration,
+        base_url: &str,
+    ) -> Self {
         let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
 
         Self {
             rate_limit,
             last_request_time: limiter,
             client,
-            base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
+            base_url: Url::parse(base_url).unwrap(),
         }
     }
 

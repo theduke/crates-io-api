@@ -2,10 +2,10 @@ use super::*;
 use std::iter::Extend;
 
 use log::trace;
-use reqwest::{blocking::Client as HttpClient, header, StatusCode, Url};
+use reqwest::{blocking::Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
-use crate::{error::JsonDecodeError, types::*};
+use crate::{error::JsonDecodeError, helper::*, types::*};
 
 /// A synchronous client for the crates.io API.
 pub struct SyncClient {
@@ -41,18 +41,38 @@ impl SyncClient {
         user_agent: &str,
         rate_limit: std::time::Duration,
     ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
-        let mut headers = header::HeaderMap::new();
-        headers.insert(
-            header::USER_AGENT,
-            header::HeaderValue::from_str(user_agent)?,
-        );
+        Self::build(user_agent, rate_limit, None)
+    }
+
+    /// ```rust
+    /// use crates_io_api::{SyncClient,Registry};
+    /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = crates_io_api::SyncClient::build(
+    ///   "my_bot (help@my_bot.com)",
+    ///   std::time::Duration::from_millis(1000),
+    ///   Some(&Registry{
+    ///     url: "https://crates.my-registry.com/api/v1/".to_string(),
+    ///     name: Some("my_registry".to_string()),
+    ///     token: None,
+    ///     }),
+    ///  ).unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn build(
+        user_agent: &str,
+        rate_limit: std::time::Duration,
+        registry: Option<&Registry>,
+    ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
+        let headers = setup_headers(user_agent, registry)?;
+        let base_url = base_url(registry);
 
         Ok(Self {
             client: HttpClient::builder()
                 .default_headers(headers)
                 .build()
                 .unwrap(),
-            base_url: Url::parse("https://crates.io/api/v1/").unwrap(),
+            base_url: Url::parse(base_url).unwrap(),
             rate_limit,
             last_request_time: std::sync::Mutex::new(None),
         })
