@@ -343,14 +343,14 @@ mod test {
     fn test_summary() -> Result<(), Error> {
         let client = build_test_client();
         let summary = client.summary()?;
-        assert!(summary.most_downloaded.len() > 0);
-        assert!(summary.just_updated.len() > 0);
-        assert!(summary.new_crates.len() > 0);
-        assert!(summary.most_recently_downloaded.len() > 0);
+        assert!(!summary.most_downloaded.is_empty());
+        assert!(!summary.just_updated.is_empty());
+        assert!(!summary.new_crates.is_empty());
+        assert!(!summary.most_recently_downloaded.is_empty());
         assert!(summary.num_crates > 0);
         assert!(summary.num_downloads > 0);
-        assert!(summary.popular_categories.len() > 0);
-        assert!(summary.popular_keywords.len() > 0);
+        assert!(!summary.popular_categories.is_empty());
+        assert!(!summary.popular_keywords.is_empty());
         Ok(())
     }
 
