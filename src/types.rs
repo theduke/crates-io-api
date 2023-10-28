@@ -347,6 +347,7 @@ pub struct Version {
     pub links: VersionLinks,
     pub crate_size: Option<u64>,
     pub published_by: Option<User>,
+    pub rust_version: Option<String>,
 }
 
 /// A crate category.
