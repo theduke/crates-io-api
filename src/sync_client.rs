@@ -1,7 +1,6 @@
 use super::*;
 use std::iter::Extend;
 
-use log::trace;
 use reqwest::{blocking::Client as HttpClient, header, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
@@ -59,8 +58,6 @@ impl SyncClient {
     }
 
     fn get<T: DeserializeOwned>(&self, url: Url) -> Result<T, Error> {
-        trace!("GET {}", url);
-
         let mut lock = self.last_request_time.lock().unwrap();
         if let Some(last_request_time) = lock.take() {
             let now = std::time::Instant::now();
