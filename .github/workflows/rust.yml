@@ -4,7 +4,11 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+
+# Automatically cancel previous workflow runs when a new commit is pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -17,19 +21,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions-rs/toolchain@v1
-      with:
-          toolchain: ${{ matrix.rust-channel }}
-          override: true
-          components: rustfmt, clippy
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
 
-    - name: Build
-      run: cargo build --verbose --release
-
-    - name: Formatting
+    - name: Check formatting
       run: cargo fmt --check
 
-    - name: Lint
+    - name: Clippy lints
       run: cargo clippy -- --deny warnings
 
     - name: Test
