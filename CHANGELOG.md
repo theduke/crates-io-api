@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.8.1
+## 0.8.2 - 2023-10-28
+
+* Fix typo in `Display` implementation (#59)
+* Add .page() method to crate query builder (#61)
+* Add `recent_downloads` field to FullCrate (#63)
+* Derive more traits for `Author` (#64)
+* String representaton for Sort::Relevance (#65)
+* Add rust_version field to Version (#67)
+
+## 0.8.1 - 2022-09-05
 
 * Add `AsyncClient::with_http_client` constructor
 * Add `Crate::max_stable_version` field
@@ -129,3 +138,4 @@ mainly to clean up and future-proof the API.
 * Fix URL for the /summary endpoint
 * Upgrade dependencies
 * Add a simple test
+
