@@ -2,7 +2,7 @@
 
 pkgs.mkShell {
     buildInputs = with pkgs; [
-      pkgconfig
+      pkg-config
       openssl
     ];
     LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
