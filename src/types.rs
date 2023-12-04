@@ -328,6 +328,16 @@ pub struct VersionLinks {
     pub version_downloads: String,
 }
 
+/// Changes made to a create [`Version`]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(missing_docs)]
+pub struct AuditAction {
+    /// publish, yank, unyank
+    action: String,
+    time: DateTime<Utc>,
+    user: User,
+}
+
 /// A [`Crate`] version.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
@@ -348,6 +358,8 @@ pub struct Version {
     pub crate_size: Option<u64>,
     pub published_by: Option<User>,
     pub rust_version: Option<String>,
+    #[serde(default)]
+    pub audit_actions: Vec<AuditAction>,
 }
 
 /// A crate category.
