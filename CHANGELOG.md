@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 - 2023-12-04
+
+* Add `Version::audit_actions`
+  [PR #69(https://github.com/theduke/crates-io-api/pull/69) by @kornelski
+
+
 ## 0.8.2 - 2023-10-28
 
 * Fix typo in `Display` implementation (#59)
