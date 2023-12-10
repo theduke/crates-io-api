@@ -71,7 +71,7 @@ pub struct CratesQuery {
     pub(crate) page: u64,
     pub(crate) user_id: Option<u64>,
     /// Crates.io category name.
-    /// See https://crates.io/categories
+    /// See <https://crates.io/categories>
     /// NOTE: requires lower-case dash-separated categories, not the pretty
     /// titles visible in the listing linked above.
     pub(crate) category: Option<String>,
@@ -219,7 +219,7 @@ impl CratesQueryBuilder {
     }
 
     /// Crates.io category name.
-    /// See https://crates.io/categories
+    /// See <https://crates.io/categories>
     /// NOTE: requires lower-case dash-separated categories, not the pretty
     /// titles visible in the listing linked above.
     #[must_use]
