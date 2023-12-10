@@ -555,6 +555,8 @@ impl ReverseDependencies {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct FullVersion {
+    #[serde(rename = "crate")]
+    pub crate_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub dl_path: String,
@@ -566,7 +568,11 @@ pub struct FullVersion {
     pub license: Option<String>,
     pub readme_path: Option<String>,
     pub links: VersionLinks,
+    pub crate_size: Option<u64>,
+    pub published_by: Option<User>,
     pub rust_version: Option<String>,
+    #[serde(default)]
+    pub audit_actions: Vec<AuditAction>,
 
     pub author_names: Vec<String>,
     pub dependencies: Vec<Dependency>,
@@ -576,6 +582,7 @@ impl FullVersion {
     /// Creates a [`FullVersion`] from a [`Version`], author names, and dependencies.
     pub fn from_parts(version: Version, authors: Authors, dependencies: Vec<Dependency>) -> Self {
         FullVersion {
+            crate_name: version.crate_name,
             created_at: version.created_at,
             updated_at: version.updated_at,
             dl_path: version.dl_path,
@@ -587,7 +594,10 @@ impl FullVersion {
             license: version.license,
             links: version.links,
             readme_path: version.readme_path,
+            crate_size: version.crate_size,
+            published_by: version.published_by,
             rust_version: version.rust_version,
+            audit_actions: version.audit_actions,
 
             author_names: authors.names,
             dependencies,
