@@ -572,6 +572,29 @@ pub struct FullVersion {
     pub dependencies: Vec<Dependency>,
 }
 
+impl FullVersion {
+    /// Creates a [`FullVersion`] from a [`Version`], author names, and dependencies.
+    pub fn from_parts(version: Version, authors: Authors, dependencies: Vec<Dependency>) -> Self {
+        FullVersion {
+            created_at: version.created_at,
+            updated_at: version.updated_at,
+            dl_path: version.dl_path,
+            downloads: version.downloads,
+            features: version.features,
+            id: version.id,
+            num: version.num,
+            yanked: version.yanked,
+            license: version.license,
+            links: version.links,
+            readme_path: version.readme_path,
+            rust_version: version.rust_version,
+
+            author_names: authors.names,
+            dependencies,
+        }
+    }
+}
+
 /// Complete information for a crate.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(missing_docs)]

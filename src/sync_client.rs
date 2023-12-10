@@ -208,25 +208,7 @@ impl SyncClient {
     fn full_version(&self, version: Version) -> Result<FullVersion, Error> {
         let authors = self.crate_authors(&version.crate_name, &version.num)?;
         let deps = self.crate_dependencies(&version.crate_name, &version.num)?;
-
-        let v = FullVersion {
-            created_at: version.created_at,
-            updated_at: version.updated_at,
-            dl_path: version.dl_path,
-            downloads: version.downloads,
-            features: version.features,
-            id: version.id,
-            num: version.num,
-            yanked: version.yanked,
-            license: version.license,
-            links: version.links,
-            readme_path: version.readme_path,
-            rust_version: version.rust_version,
-
-            author_names: authors.names,
-            dependencies: deps,
-        };
-        Ok(v)
+        Ok(FullVersion::from_parts(version, authors, deps))
     }
 
     /// Retrieve all available information for a crate, including download
