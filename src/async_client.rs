@@ -323,6 +323,7 @@ impl Client {
             license: version.license,
             links: version.links,
             readme_path: version.readme_path,
+            rust_version: version.rust_version,
 
             author_names: authors.names,
             dependencies: deps,
