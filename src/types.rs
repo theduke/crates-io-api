@@ -566,6 +566,7 @@ pub struct FullVersion {
     pub license: Option<String>,
     pub readme_path: Option<String>,
     pub links: VersionLinks,
+    pub rust_version: Option<String>,
 
     pub author_names: Vec<String>,
     pub dependencies: Vec<Dependency>,
