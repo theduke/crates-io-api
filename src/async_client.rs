@@ -91,7 +91,7 @@ impl futures::stream::Stream for CrateStream {
         assert!(matches!(f.poll_unpin(cx), std::task::Poll::Pending));
         inner.next_page_fetch = Some(f);
 
-        cx.waker().clone().wake();
+        cx.waker().wake_by_ref();
 
         std::task::Poll::Pending
     }
