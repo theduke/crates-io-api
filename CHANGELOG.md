@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 - 2024-04-12
+
+* Upgrade to reqwest 0.12, which uses hyper 1.0
+
 ## 0.9.0 - 2023-12-04
 
 * Add `Version::audit_actions`
