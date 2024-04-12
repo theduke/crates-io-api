@@ -4,7 +4,7 @@
 [![API Docs][docsrsimg]][docsrs]
 
 [cratesio]: https://crates.io/crates/crates_io_api
-[cratesioimg]: https://img.shields.io/crates/v/inkpad-runtime.svg
+[cratesioimg]: https://img.shields.io/crates/v/crates_io_api.svg
 [docsrs]: https://docs.rs/crates_io_api
 [docsrsimg]: https://img.shields.io/badge/current-docs-brightgreen.svg
 [crawlerpolicy]: https://crates.io/policies#crawlers
