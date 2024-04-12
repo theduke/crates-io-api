@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.0 - 2024-04-12
+## 0.11.0 - 2024-04-12
 
 * Upgrade to reqwest 0.12, which uses hyper 1.0
 
