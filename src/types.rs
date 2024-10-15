@@ -2,24 +2,24 @@
 
 use chrono::{DateTime, NaiveDate, Utc};
 use serde_derive::*;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
-/// Used to specify the sort behaviour of the `Client::crates()` method.
+/// A list of errors returned by the API.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ApiErrors {
     /// Individual errors.
     pub errors: Vec<ApiError>,
 }
 
-/// Used to specify the sort behaviour of the `Client::crates()` method.
+/// An error returned by the API.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ApiError {
     /// Error message.
     pub detail: Option<String>,
 }
 
-impl std::fmt::Display for ApiError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -77,6 +77,8 @@ pub struct CratesQuery {
     pub(crate) category: Option<String>,
     /// Search query string.
     pub(crate) search: Option<String>,
+    /// List of crate ids.
+    pub(crate) ids: Option<Vec<String>>,
 }
 
 impl CratesQuery {
@@ -92,6 +94,11 @@ impl CratesQuery {
         }
         if let Some(cat) = &self.category {
             q.append_pair("category", cat);
+        }
+        if let Some(ids) = &self.ids {
+            for id in ids {
+                q.append_pair("ids[]", id);
+            }
         }
     }
 }
@@ -161,6 +168,16 @@ impl CratesQuery {
     pub fn set_search(&mut self, search: Option<String>) {
         self.search = search;
     }
+
+    /// Get a reference to the crate query's ids.
+    pub fn ids(&self) -> Option<&Vec<String>> {
+        self.ids.as_ref()
+    }
+
+    /// Set the crate query's ids.
+    pub fn set_ids(&mut self, ids: Option<Vec<String>>) {
+        self.ids = ids;
+    }
 }
 
 impl Default for CratesQuery {
@@ -172,6 +189,7 @@ impl Default for CratesQuery {
             user_id: None,
             category: None,
             search: None,
+            ids: None,
         }
     }
 }
@@ -232,6 +250,13 @@ impl CratesQueryBuilder {
     #[must_use]
     pub fn search(mut self, search: impl Into<String>) -> Self {
         self.query.search = Some(search.into());
+        self
+    }
+
+    /// List of crate ids.
+    #[must_use]
+    pub fn ids(mut self, ids: Vec<String>) -> Self {
+        self.query.ids = Some(ids);
         self
     }
 
