@@ -570,6 +570,31 @@ mod test {
     }
 
     #[tokio::test]
+    async fn test_crates_filter_by_ids_async() -> Result<(), Error> {
+        let client = build_test_client();
+
+        let ids = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+            .map(Into::into)
+            .to_vec();
+        let res = client
+            .crates(CratesQuery {
+                ids: Some(ids),
+                per_page: 10,
+                ..Default::default()
+            })
+            .await?;
+
+        assert_eq!(
+            res.crates.len(),
+            10,
+            "Expected 10 crates, actually got {}. Crates: {:#?}",
+            res.crates.len(),
+            res.crates
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_crate_reverse_dependency_count_async() -> Result<(), Error> {
         let client = build_test_client();
         let count = client
