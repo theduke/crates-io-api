@@ -29,7 +29,7 @@ impl SyncClient {
     ///
     /// ```rust
     /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
-    /// let client = crates_io_api::AsyncClient::new(
+    /// let client = crates_io_api::SyncClient::new(
     ///   "my_bot (help@my_bot.com)",
     ///   std::time::Duration::from_millis(1000),
     /// ).unwrap();
