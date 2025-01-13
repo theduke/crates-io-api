@@ -41,6 +41,20 @@
 //!     Ok(())
 //! }
 //! ```
+//!
+//! # WASM
+//! When compiling for `WASM`, one has to disable default features and use the `async` and
+//! `reqwest/default-tls` features.
+//! ```bash
+//! cargo build\
+//!     --target wasm32-unknown-unknown\
+//!     --no-default-features\
+//!     --features async,reqwest/rustls-tls
+//! ```
+//!
+//! # Features
+//! - `sync` Enables the synchronos protocol
+//! - `async` Enables asynchronos functionality
 
 #![recursion_limit = "128"]
 #![deny(missing_docs)]
