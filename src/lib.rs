@@ -48,6 +48,7 @@ mod async_client;
 mod error;
 mod sync_client;
 mod types;
+mod util;
 
 pub use crate::{
     async_client::Client as AsyncClient,
