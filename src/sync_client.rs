@@ -1,7 +1,8 @@
 use super::*;
 use std::iter::Extend;
 
-use reqwest::{blocking::Client as HttpClient, header, StatusCode, Url};
+use reqwest::blocking::Client as HttpClient;
+use reqwest::{header, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
 use crate::{error::JsonDecodeError, types::*};

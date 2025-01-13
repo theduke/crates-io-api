@@ -17,6 +17,7 @@
 //!
 //! Print the most downloaded crates and their non-optional dependencies:
 //!
+#![cfg(feature = "sync")]
 //! ```rust
 //! use crates_io_api::{SyncClient, Error};
 //!
@@ -43,16 +44,26 @@
 
 #![recursion_limit = "128"]
 #![deny(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
 mod async_client;
 mod error;
+
+#[cfg(all(feature = "sync", not(target_arch = "wasm32")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "sync")))]
 mod sync_client;
+
 mod types;
 mod util;
 
+#[cfg(feature = "async")]
+pub use crate::async_client::Client as AsyncClient;
+#[cfg(all(feature = "sync", not(target_arch = "wasm32")))]
+pub use crate::sync_client::SyncClient;
+
 pub use crate::{
-    async_client::Client as AsyncClient,
     error::{Error, NotFoundError, PermissionDeniedError},
-    sync_client::SyncClient,
     types::*,
 };
