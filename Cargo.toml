@@ -9,6 +9,7 @@ readme = "README.md"
 keywords = [ "crates", "api" ]
 categories = [ "web-programming", "web-programming::http-client" ]
 edition = "2018"
+resolver = "2"
 
 version = "0.11.0"
 
