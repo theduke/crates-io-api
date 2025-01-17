@@ -26,6 +26,7 @@ pub struct Client {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
 pub struct CrateStream {
     client: Client,
     filter: CratesQuery,
@@ -36,6 +37,7 @@ pub struct CrateStream {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
 impl CrateStream {
     fn new(client: Client, filter: CratesQuery) -> Self {
         Self {
@@ -49,6 +51,7 @@ impl CrateStream {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
 impl futures::stream::Stream for CrateStream {
     type Item = Result<Crate, Error>;
 
@@ -391,6 +394,7 @@ impl Client {
 
     /// Get a stream over all crates matching the given [`CratesQuery`].
     #[cfg(not(target_arch = "wasm32"))]
+    #[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
     pub fn crates_stream(&self, filter: CratesQuery) -> CrateStream {
         CrateStream::new(self.clone(), filter)
     }
