@@ -1,9 +1,12 @@
+#[cfg(not(target_arch = "wasm32"))]
 use futures::future::BoxFuture;
+#[cfg(not(target_arch = "wasm32"))]
 use futures::prelude::*;
 use futures::{future::try_join_all, try_join};
 use reqwest::{header, Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::collections::VecDeque;
 
 use web_time::Duration;
@@ -22,6 +25,7 @@ pub struct Client {
     base_url: Url,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub struct CrateStream {
     client: Client,
     filter: CratesQuery,
@@ -31,6 +35,7 @@ pub struct CrateStream {
     next_page_fetch: Option<BoxFuture<'static, Result<CratesPage, Error>>>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl CrateStream {
     fn new(client: Client, filter: CratesQuery) -> Self {
         Self {
@@ -43,6 +48,7 @@ impl CrateStream {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl futures::stream::Stream for CrateStream {
     type Item = Result<Crate, Error>;
 
@@ -384,6 +390,7 @@ impl Client {
     }
 
     /// Get a stream over all crates matching the given [`CratesQuery`].
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn crates_stream(&self, filter: CratesQuery) -> CrateStream {
         CrateStream::new(self.clone(), filter)
     }

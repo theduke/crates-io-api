@@ -46,6 +46,7 @@
 
 mod async_client;
 mod error;
+#[cfg(not(target_arch = "wasm32"))]
 mod sync_client;
 mod types;
 mod util;
@@ -53,6 +54,8 @@ mod util;
 pub use crate::{
     async_client::Client as AsyncClient,
     error::{Error, NotFoundError, PermissionDeniedError},
-    sync_client::SyncClient,
     types::*,
 };
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use crate::sync_client::SyncClient;
