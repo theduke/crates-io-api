@@ -6,6 +6,8 @@ use serde::de::DeserializeOwned;
 
 use std::collections::VecDeque;
 
+use web_time::Duration;
+
 use super::Error;
 use crate::error::JsonDecodeError;
 use crate::types::*;
@@ -15,8 +17,8 @@ use crate::util::*;
 #[derive(Clone)]
 pub struct Client {
     client: HttpClient,
-    rate_limit: std::time::Duration,
-    last_request_time: std::sync::Arc<tokio::sync::Mutex<Option<tokio::time::Instant>>>,
+    rate_limit: Duration,
+    last_request_time: std::sync::Arc<tokio::sync::Mutex<Option<web_time::Instant>>>,
     base_url: Url,
 }
 
@@ -113,17 +115,18 @@ impl Client {
     /// Example user agent: `"my_bot (my_bot.com/info)"` or `"my_bot (help@my_bot.com)"`.
     ///
     /// ```rust
+    /// # use web_time::Duration;
     /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
-    ///   std::time::Duration::from_millis(1000),
+    ///   Duration::from_millis(1000),
     /// ).unwrap();
     /// # Ok(())
     /// # }
     /// ```
     pub fn new(
         user_agent: &str,
-        rate_limit: std::time::Duration,
+        rate_limit: Duration,
     ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
@@ -147,7 +150,7 @@ impl Client {
     /// At most one request will be executed in the specified duration.
     /// The guidelines suggest 1 per second or less.
     /// (Only one request is executed concurrenly, even if the given Duration is 0).
-    pub fn with_http_client(client: HttpClient, rate_limit: std::time::Duration) -> Self {
+    pub fn with_http_client(client: HttpClient, rate_limit: Duration) -> Self {
         let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
 
         Self {
@@ -167,7 +170,7 @@ impl Client {
             }
         }
 
-        let time = tokio::time::Instant::now();
+        let time = web_time::Instant::now();
         let res = self.client.get(url.clone()).send().await?;
 
         if !res.status().is_success() {
@@ -399,7 +402,7 @@ mod test {
     fn build_test_client() -> Client {
         Client::new(
             "crates-io-api-continuous-integration (github.com/theduke/crates-io-api)",
-            std::time::Duration::from_millis(1000),
+            web_time::Duration::from_millis(1000),
         )
         .unwrap()
     }
