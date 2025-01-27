@@ -27,6 +27,7 @@ web-time = { version = "1.1" }
 
 [dev-dependencies]
 tokio = { version = "1.43", features = ["macros"]}
+crates_io_api = { package = "crates_io_api-wasm-patch", git = "https://github.com/jonaspleyer/crates-io-api"}
 
 [features]
 default = ["reqwest/default-tls"]
