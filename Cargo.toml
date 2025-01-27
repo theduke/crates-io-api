@@ -1,9 +1,9 @@
 [package]
-authors = ["theduke <chris@theduke.at>"]
-name = "crates_io_api"
-description = "API client for crates.io"
+authors = ["theduke <chris@theduke.at>", "jonaspleyer <jonas.dev@pleyer.org"]
+name = "crates_io_api-wasm-patch"
+description = "WASM-compatible patch of crates_io_api"
 license = "MIT/Apache-2.0"
-repository = "https://github.com/theduke/crates-io-api"
+repository = "https://github.com/jonaspleyer/crates-io-api"
 documentation = "https://docs.rs/crates_io_api"
 readme = "README.md"
 keywords = [ "crates", "api" ]
@@ -11,7 +11,7 @@ categories = [ "web-programming", "web-programming::http-client" ]
 edition = "2018"
 resolver = "2"
 
-version = "0.11.0"
+version = "0.12.0"
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
