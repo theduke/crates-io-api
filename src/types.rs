@@ -70,6 +70,7 @@ pub struct CratesQuery {
     /// The page to fetch.
     pub(crate) page: u64,
     pub(crate) user_id: Option<u64>,
+    pub(crate) team_id: Option<u64>,
     /// Crates.io category name.
     /// See <https://crates.io/categories>
     /// NOTE: requires lower-case dash-separated categories, not the pretty
@@ -88,6 +89,9 @@ impl CratesQuery {
         q.append_pair("sort", self.sort.to_str());
         if let Some(id) = self.user_id {
             q.append_pair("user_id", &id.to_string());
+        }
+        if let Some(id) = self.team_id {
+            q.append_pair("team_id", &id.to_string());
         }
         if let Some(search) = &self.search {
             q.append_pair("q", search);
@@ -149,6 +153,16 @@ impl CratesQuery {
         self.user_id = user_id;
     }
 
+    /// Get the crate query's team id.
+    pub fn team_id(&self) -> Option<u64> {
+        self.team_id
+    }
+
+    /// Set the crate query's team id.
+    pub fn set_team_id(&mut self, team_id: Option<u64>) {
+        self.team_id = team_id;
+    }
+
     /// Get a reference to the crate query's category.
     pub fn category(&self) -> Option<&String> {
         self.category.as_ref()
@@ -187,6 +201,7 @@ impl Default for CratesQuery {
             per_page: 30,
             page: 1,
             user_id: None,
+            team_id: None,
             category: None,
             search: None,
             ids: None,
@@ -233,6 +248,13 @@ impl CratesQueryBuilder {
     #[must_use]
     pub fn user_id(mut self, user_id: u64) -> Self {
         self.query.user_id = Some(user_id);
+        self
+    }
+
+    /// Filter by a team id.
+    #[must_use]
+    pub fn team_id(mut self, team_id: u64) -> Self {
+        self.query.team_id = Some(team_id);
         self
     }
 
