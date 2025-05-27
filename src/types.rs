@@ -407,6 +407,7 @@ pub struct Version {
     pub rust_version: Option<String>,
     #[serde(default)]
     pub audit_actions: Vec<AuditAction>,
+    pub checksum: String,
 }
 
 /// A crate category.
@@ -623,6 +624,7 @@ pub struct FullVersion {
 
     pub author_names: Vec<String>,
     pub dependencies: Vec<Dependency>,
+    pub checksum: String,
 }
 
 impl FullVersion {
@@ -648,6 +650,7 @@ impl FullVersion {
 
             author_names: authors.names,
             dependencies,
+            checksum: version.checksum,
         }
     }
 }
