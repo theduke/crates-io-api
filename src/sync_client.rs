@@ -4,7 +4,7 @@ use std::iter::Extend;
 use reqwest::{blocking::Client as HttpClient, header, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
-use crate::{error::JsonDecodeError, types::*};
+use crate::types::*;
 
 /// A synchronous client for the crates.io API.
 pub struct SyncClient {
@@ -72,12 +72,10 @@ impl SyncClient {
 
         if !res.status().is_success() {
             let err = match res.status() {
-                StatusCode::NOT_FOUND => Error::NotFound(super::error::NotFoundError {
-                    url: url.to_string(),
-                }),
+                StatusCode::NOT_FOUND => Error::NotFound(url.to_string()),
                 StatusCode::FORBIDDEN => {
                     let reason = res.text().unwrap_or_default();
-                    Error::PermissionDenied(super::error::PermissionDeniedError { reason })
+                    Error::PermissionDenied(reason)
                 }
                 _ => Error::from(res.error_for_status().unwrap_err()),
             };
@@ -97,9 +95,10 @@ impl SyncClient {
 
         let jd = &mut serde_json::Deserializer::from_str(&content);
         serde_path_to_error::deserialize::<_, T>(jd).map_err(|err| {
-            Error::JsonDecode(JsonDecodeError {
-                message: format!("Could not decode JSON: {err} (path: {})", err.path()),
-            })
+            Error::JsonDecode(format!(
+                "Could not decode JSON: {err} (path: {})",
+                err.path()
+            ))
         })
     }
 

@@ -7,7 +7,6 @@ use serde::de::DeserializeOwned;
 use std::collections::VecDeque;
 
 use super::Error;
-use crate::error::JsonDecodeError;
 use crate::types::*;
 
 /// Asynchronous client for the crates.io API.
@@ -171,12 +170,10 @@ impl Client {
 
         if !res.status().is_success() {
             let err = match res.status() {
-                StatusCode::NOT_FOUND => Error::NotFound(super::error::NotFoundError {
-                    url: url.to_string(),
-                }),
+                StatusCode::NOT_FOUND => Error::NotFound(url.to_string()),
                 StatusCode::FORBIDDEN => {
                     let reason = res.text().await.unwrap_or_default();
-                    Error::PermissionDenied(super::error::PermissionDeniedError { reason })
+                    Error::PermissionDenied(reason)
                 }
                 _ => Error::from(res.error_for_status().unwrap_err()),
             };
@@ -197,9 +194,10 @@ impl Client {
 
         let jd = &mut serde_json::Deserializer::from_str(&content);
         serde_path_to_error::deserialize::<_, T>(jd).map_err(|err| {
-            Error::JsonDecode(JsonDecodeError {
-                message: format!("Could not decode JSON: {err} (path: {})", err.path()),
-            })
+            Error::JsonDecode(format!(
+                "Could not decode JSON: {err} (path: {})",
+                err.path()
+            ))
         })
     }
 
@@ -398,9 +396,7 @@ pub(crate) fn build_crate_url(base: &Url, crate_name: &str) -> Result<Url, Error
     // Guard against slashes in the crate name.
     // The API returns a nonsensical error in this case.
     if crate_name.contains('/') {
-        Err(Error::NotFound(crate::error::NotFoundError {
-            url: url.to_string(),
-        }))
+        Err(Error::NotFound(url.to_string()))
     } else {
         Ok(url)
     }
@@ -413,9 +409,7 @@ fn build_crate_url_nested(base: &Url, crate_name: &str) -> Result<Url, Error> {
     // Guard against slashes in the crate name.
     // The API returns a nonsensical error in this case.
     if crate_name.contains('/') {
-        Err(Error::NotFound(crate::error::NotFoundError {
-            url: url.to_string(),
-        }))
+        Err(Error::NotFound(url.to_string()))
     } else {
         Ok(url)
     }

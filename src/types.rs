@@ -2,30 +2,22 @@
 
 use chrono::{DateTime, NaiveDate, Utc};
 use serde_derive::*;
-use std::{collections::HashMap, fmt};
+use std::collections::HashMap;
 
 /// A list of errors returned by the API.
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("A list of errors returned by the API: {errors:?}")]
 pub struct ApiErrors {
     /// Individual errors.
     pub errors: Vec<ApiError>,
 }
 
 /// An error returned by the API.
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("An error returned by the API: {detail:?}")]
 pub struct ApiError {
     /// Error message.
     pub detail: Option<String>,
-}
-
-impl fmt::Display for ApiError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.detail.as_deref().unwrap_or("Unknown API Error")
-        )
-    }
 }
 
 /// Used to specify the sort behaviour of the `Client::crates()` method.
