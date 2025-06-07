@@ -1,24 +1,32 @@
+#[cfg(not(target_arch = "wasm32"))]
 use futures::future::BoxFuture;
+#[cfg(not(target_arch = "wasm32"))]
 use futures::prelude::*;
 use futures::{future::try_join_all, try_join};
 use reqwest::{header, Client as HttpClient, StatusCode, Url};
 use serde::de::DeserializeOwned;
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::collections::VecDeque;
+
+use web_time::Duration;
 
 use super::Error;
 use crate::error::JsonDecodeError;
 use crate::types::*;
+use crate::util::*;
 
 /// Asynchronous client for the crates.io API.
 #[derive(Clone)]
 pub struct Client {
     client: HttpClient,
-    rate_limit: std::time::Duration,
-    last_request_time: std::sync::Arc<tokio::sync::Mutex<Option<tokio::time::Instant>>>,
+    rate_limit: Duration,
+    last_request_time: std::sync::Arc<tokio::sync::Mutex<Option<web_time::Instant>>>,
     base_url: Url,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
 pub struct CrateStream {
     client: Client,
     filter: CratesQuery,
@@ -28,6 +36,8 @@ pub struct CrateStream {
     next_page_fetch: Option<BoxFuture<'static, Result<CratesPage, Error>>>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
 impl CrateStream {
     fn new(client: Client, filter: CratesQuery) -> Self {
         Self {
@@ -40,6 +50,8 @@ impl CrateStream {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
 impl futures::stream::Stream for CrateStream {
     type Item = Result<Crate, Error>;
 
@@ -112,17 +124,18 @@ impl Client {
     /// Example user agent: `"my_bot (my_bot.com/info)"` or `"my_bot (help@my_bot.com)"`.
     ///
     /// ```rust
+    /// # use web_time::Duration;
     /// # fn f() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = crates_io_api::AsyncClient::new(
     ///   "my_bot (help@my_bot.com)",
-    ///   std::time::Duration::from_millis(1000),
+    ///   Duration::from_millis(1000),
     /// ).unwrap();
     /// # Ok(())
     /// # }
     /// ```
     pub fn new(
         user_agent: &str,
-        rate_limit: std::time::Duration,
+        rate_limit: Duration,
     ) -> Result<Self, reqwest::header::InvalidHeaderValue> {
         let mut headers = header::HeaderMap::new();
         headers.insert(
@@ -146,7 +159,7 @@ impl Client {
     /// At most one request will be executed in the specified duration.
     /// The guidelines suggest 1 per second or less.
     /// (Only one request is executed concurrenly, even if the given Duration is 0).
-    pub fn with_http_client(client: HttpClient, rate_limit: std::time::Duration) -> Self {
+    pub fn with_http_client(client: HttpClient, rate_limit: Duration) -> Self {
         let limiter = std::sync::Arc::new(tokio::sync::Mutex::new(None));
 
         Self {
@@ -166,7 +179,7 @@ impl Client {
             }
         }
 
-        let time = tokio::time::Instant::now();
+        let time = web_time::Instant::now();
         let res = self.client.get(url.clone()).send().await?;
 
         if !res.status().is_success() {
@@ -380,6 +393,8 @@ impl Client {
     }
 
     /// Get a stream over all crates matching the given [`CratesQuery`].
+    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg_attr(docsrs, doc(cfg(not(target_arch = "wasm32"))))]
     pub fn crates_stream(&self, filter: CratesQuery) -> CrateStream {
         CrateStream::new(self.clone(), filter)
     }
@@ -391,78 +406,6 @@ impl Client {
     }
 }
 
-pub(crate) fn build_crate_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    let mut url = base.join("crates")?;
-    url.path_segments_mut().unwrap().push(crate_name);
-
-    // Guard against slashes in the crate name.
-    // The API returns a nonsensical error in this case.
-    if crate_name.contains('/') {
-        Err(Error::NotFound(crate::error::NotFoundError {
-            url: url.to_string(),
-        }))
-    } else {
-        Ok(url)
-    }
-}
-
-fn build_crate_url_nested(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    let mut url = base.join("crates")?;
-    url.path_segments_mut().unwrap().push(crate_name).push("/");
-
-    // Guard against slashes in the crate name.
-    // The API returns a nonsensical error in this case.
-    if crate_name.contains('/') {
-        Err(Error::NotFound(crate::error::NotFoundError {
-            url: url.to_string(),
-        }))
-    } else {
-        Ok(url)
-    }
-}
-
-pub(crate) fn build_crate_downloads_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    build_crate_url_nested(base, crate_name)?
-        .join("downloads")
-        .map_err(Error::from)
-}
-
-pub(crate) fn build_crate_owners_url(base: &Url, crate_name: &str) -> Result<Url, Error> {
-    build_crate_url_nested(base, crate_name)?
-        .join("owners")
-        .map_err(Error::from)
-}
-
-pub(crate) fn build_crate_reverse_deps_url(
-    base: &Url,
-    crate_name: &str,
-    page: u64,
-) -> Result<Url, Error> {
-    build_crate_url_nested(base, crate_name)?
-        .join(&format!("reverse_dependencies?per_page=100&page={page}"))
-        .map_err(Error::from)
-}
-
-pub(crate) fn build_crate_authors_url(
-    base: &Url,
-    crate_name: &str,
-    version: &str,
-) -> Result<Url, Error> {
-    build_crate_url_nested(base, crate_name)?
-        .join(&format!("{version}/authors"))
-        .map_err(Error::from)
-}
-
-pub(crate) fn build_crate_dependencies_url(
-    base: &Url,
-    crate_name: &str,
-    version: &str,
-) -> Result<Url, Error> {
-    build_crate_url_nested(base, crate_name)?
-        .join(&format!("{version}/dependencies"))
-        .map_err(Error::from)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -470,7 +413,7 @@ mod test {
     fn build_test_client() -> Client {
         Client::new(
             "crates-io-api-continuous-integration (github.com/theduke/crates-io-api)",
-            std::time::Duration::from_millis(1000),
+            web_time::Duration::from_millis(1000),
         )
         .unwrap()
     }

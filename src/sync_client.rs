@@ -113,19 +113,19 @@ impl SyncClient {
     ///
     /// If you require detailed information, consider using [full_crate]().
     pub fn get_crate(&self, crate_name: &str) -> Result<CrateResponse, Error> {
-        let url = super::async_client::build_crate_url(&self.base_url, crate_name)?;
+        let url = super::util::build_crate_url(&self.base_url, crate_name)?;
         self.get(url)
     }
 
     /// Retrieve download stats for a crate.
     pub fn crate_downloads(&self, crate_name: &str) -> Result<CrateDownloads, Error> {
-        let url = super::async_client::build_crate_downloads_url(&self.base_url, crate_name)?;
+        let url = super::util::build_crate_downloads_url(&self.base_url, crate_name)?;
         self.get(url)
     }
 
     /// Retrieve the owners of a crate.
     pub fn crate_owners(&self, crate_name: &str) -> Result<Vec<User>, Error> {
-        let url = super::async_client::build_crate_owners_url(&self.base_url, crate_name)?;
+        let url = super::util::build_crate_owners_url(&self.base_url, crate_name)?;
         let resp: Owners = self.get(url)?;
         Ok(resp.users)
     }
@@ -138,8 +138,7 @@ impl SyncClient {
         crate_name: &str,
         page: u64,
     ) -> Result<ReverseDependencies, Error> {
-        let url =
-            super::async_client::build_crate_reverse_deps_url(&self.base_url, crate_name, page)?;
+        let url = super::util::build_crate_reverse_deps_url(&self.base_url, crate_name, page)?;
         let page = self.get::<ReverseDependenciesAsReceived>(url)?;
 
         let mut deps = ReverseDependencies {
@@ -185,8 +184,7 @@ impl SyncClient {
 
     /// Retrieve the authors for a crate version.
     pub fn crate_authors(&self, crate_name: &str, version: &str) -> Result<Authors, Error> {
-        let url =
-            super::async_client::build_crate_authors_url(&self.base_url, crate_name, version)?;
+        let url = super::util::build_crate_authors_url(&self.base_url, crate_name, version)?;
         let res: AuthorsResponse = self.get(url)?;
         Ok(Authors {
             names: res.meta.names,
@@ -199,8 +197,7 @@ impl SyncClient {
         crate_name: &str,
         version: &str,
     ) -> Result<Vec<Dependency>, Error> {
-        let url =
-            super::async_client::build_crate_dependencies_url(&self.base_url, crate_name, version)?;
+        let url = super::util::build_crate_dependencies_url(&self.base_url, crate_name, version)?;
         let resp: Dependencies = self.get(url)?;
         Ok(resp.dependencies)
     }
