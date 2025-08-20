@@ -37,3 +37,12 @@ You can also use [rustls](https://github.com/rustls/rustls).
 [dependencies]
 crates_io_api = { version = "?", default-features = false, features = ["rustls"] }
 ```
+
+## Development
+
+### Releasing
+
+* Update CHANGELOG.md
+  Commit and push
+* Run `cargo release`
+ 

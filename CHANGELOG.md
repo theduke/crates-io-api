@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.0 - 2025-08-20
+
+* feat: add checksum to version types
+  #79
+
+* Add team_id to query
+  #78
+
+* add id filter to crates query
+  #74
+
 ## 0.11.0 - 2024-04-12
 
 * Upgrade to reqwest 0.12, which uses hyper 1.0
