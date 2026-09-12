@@ -352,6 +352,16 @@ pub struct Crate {
 #[allow(missing_docs)]
 pub struct CratesPage {
     pub crates: Vec<Crate>,
+    /// **Warning:** This field is always empty (`Vec::new()`) when returned
+    /// from bulk search or listing queries (such as `client.crates(...)`).
+    ///
+    /// The crates.io backend removed version sideloading from search and list
+    /// endpoints to reduce payload size and database load. Serde defaults this
+    /// field to an empty vector rather than failing.
+    ///
+    /// - For the latest version string, use `c.max_version` on the `Crate` struct directly.
+    /// - For complete version history, fetch the crate explicitly via
+    ///   `client.full_crate(name: ..., all_versions: true)`.
     #[serde(default)]
     pub versions: Vec<Version>,
     #[serde(default)]
